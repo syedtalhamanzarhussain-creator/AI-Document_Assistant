@@ -635,6 +635,125 @@ hr {
     }
 
 }
+/* =======================================================
+   FINAL STREAMLIT COMPONENT FIXES
+   ======================================================= */
+
+/* Inline code / source badges */
+code {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+    padding: 2px 6px !important;
+    font-size: 0.82em !important;
+}
+
+
+/* Code blocks */
+pre {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+}
+
+
+/* Sources Used expander */
+[data-testid="stExpander"] {
+    background: #ffffff !important;
+    border: 1px solid #dbe4f0 !important;
+    border-radius: 14px !important;
+}
+
+
+[data-testid="stExpander"] details {
+    background: #ffffff !important;
+}
+
+
+[data-testid="stExpander"] summary {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: none !important;
+}
+
+
+[data-testid="stExpander"] summary:hover {
+    background: #f8fafc !important;
+}
+
+
+/* Bottom chat area */
+[data-testid="stBottom"] {
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+}
+
+
+[data-testid="stBottom"] > div {
+    background: #ffffff !important;
+}
+
+
+/* Chat input container */
+[data-testid="stChatInput"] {
+    background: #ffffff !important;
+    border: 1px solid #dbe4f0 !important;
+    border-radius: 16px !important;
+}
+
+
+[data-testid="stChatInput"] > div {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+}
+
+
+[data-testid="stChatInput"] textarea {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+
+
+[data-testid="stChatInput"] textarea::placeholder {
+    color: #94a3b8 !important;
+    -webkit-text-fill-color: #94a3b8 !important;
+}
+
+
+/* Chat send button */
+[data-testid="stChatInput"] button {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+}
+
+
+[data-testid="stChatInput"] button svg {
+    color: #ffffff !important;
+}
+
+
+/* Markdown inside assistant messages */
+[data-testid="stChatMessage"] {
+    background: transparent !important;
+}
+
+
+[data-testid="stChatMessage"] code {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+
+/* Remove dark native surfaces */
+[data-testid="stVerticalBlock"],
+[data-testid="stHorizontalBlock"] {
+    color: #0f172a;
+}
 
 </style>
 """,
@@ -1193,9 +1312,10 @@ def generate_answer(
             },
         ],
 
-        temperature=0,
-
-        max_tokens=1200,
+    temperature=0,
+    max_completion_tokens=1200,
+    reasoning_effort="low",
+    include_reasoning=False,
     )
 
     answer = response.choices[0].message.content
