@@ -1683,18 +1683,16 @@ with st.sidebar:
     )
 
 
-    uploaded_files = st.file_uploader(
-        "Upload documents",
-
-        type=SUPPORTED_TYPES,
-
-        accept_multiple_files=True,
-
-        help=(
-            "Supported formats: PDF, DOCX, "
-            "TXT and Markdown."
-        ),
-    )
+   uploaded_files = st.file_uploader(
+    "Upload documents",
+    type=SUPPORTED_TYPES,
+    accept_multiple_files=True,
+    key="document_uploader",
+    help=(
+        "Supported formats: PDF, DOCX, "
+        "TXT and Markdown."
+    ),
+)
 
 
     if uploaded_files:
