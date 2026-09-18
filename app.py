@@ -16,14 +16,24 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from groq import Groq
 
 
+# =========================================================
+# CONFIGURATION
+# =========================================================
+
 APP_TITLE = "DocAI — Enterprise Document Intelligence"
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
-GROQ_MODEL_NAME = "openai/gpt-oss-120b"
+GROQ_MODEL_NAME = "llama-3.3-70b-versatile"
+
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 150
 TOP_K = 5
+
 SUPPORTED_TYPES = ["pdf", "docx", "txt", "md"]
 
+
+# =========================================================
+# PAGE CONFIG
+# =========================================================
 
 st.set_page_config(
     page_title=APP_TITLE,
@@ -33,254 +43,727 @@ st.set_page_config(
 )
 
 
-# ---------- Professional responsive UI ----------
-st.markdown("""
+# =========================================================
+# PROFESSIONAL UI / THEME
+# =========================================================
+
+st.markdown(
+    """
 <style>
-    /* Global */
-    .stApp {
-        background: #f7f9fc;
-    }
-    [data-testid="stHeader"] {
-        background: rgba(247,249,252,0.92);
-    }
+
+/* =========================================================
+   DOC AI PROFESSIONAL LIGHT THEME
+   ========================================================= */
+
+:root {
+    color-scheme: light !important;
+
+    --docai-bg: #f7f9fc;
+    --docai-surface: #ffffff;
+    --docai-surface-2: #f1f5f9;
+    --docai-border: #e2e8f0;
+
+    --docai-text: #0f172a;
+    --docai-muted: #64748b;
+
+    --docai-accent: #2563eb;
+    --docai-accent-dark: #1d4ed8;
+}
+
+
+/* =========================================================
+   FORCE STREAMLIT LIGHT THEME
+   ========================================================= */
+
+html,
+body {
+    color-scheme: light !important;
+}
+
+html {
+    --st-background-color: var(--docai-bg) !important;
+    --st-secondary-background-color: var(--docai-surface) !important;
+    --st-text-color: var(--docai-text) !important;
+    --st-border-color: var(--docai-border) !important;
+    --st-primary-color: var(--docai-accent) !important;
+}
+
+
+[data-testid="stAppViewContainer"] {
+    background: var(--docai-bg) !important;
+    color: var(--docai-text) !important;
+}
+
+
+[data-testid="stAppViewContainer"] *,
+[data-testid="stSidebar"] * {
+    color: var(--docai-text);
+}
+
+
+/* =========================================================
+   MAIN LAYOUT
+   ========================================================= */
+
+.block-container {
+    max-width: 1180px !important;
+    padding: 1.75rem 1.25rem 6rem !important;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+section[data-testid="stSidebar"] {
+    background: var(--docai-surface) !important;
+    border-right: 1px solid var(--docai-border) !important;
+}
+
+section[data-testid="stSidebar"] > div {
+    background: var(--docai-surface) !important;
+}
+
+section[data-testid="stSidebar"] .block-container {
+    padding: 1.25rem 1rem 2rem !important;
+}
+
+
+/* =========================================================
+   GENERAL TEXT
+   ========================================================= */
+
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] small,
+[data-testid="stSidebar"] div,
+[data-testid="stAppViewContainer"] label,
+[data-testid="stAppViewContainer"] p,
+[data-testid="stAppViewContainer"] span {
+    color: var(--docai-text);
+}
+
+
+[data-testid="stCaptionContainer"] *,
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stMarkdownContainer"] strong,
+[data-testid="stMarkdownContainer"] em {
+    color: var(--docai-text) !important;
+}
+
+
+[data-testid="stCaptionContainer"] * {
+    color: var(--docai-muted) !important;
+}
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+
+[data-baseweb="input"],
+[data-baseweb="textarea"],
+[data-baseweb="select"] {
+    background: #ffffff !important;
+    border-color: var(--docai-border) !important;
+}
+
+
+[data-baseweb="input"] input,
+[data-baseweb="textarea"] textarea,
+[data-baseweb="select"] * {
+    background: #ffffff !important;
+    color: var(--docai-text) !important;
+    -webkit-text-fill-color: var(--docai-text) !important;
+}
+
+
+[data-baseweb="input"] input::placeholder,
+[data-baseweb="textarea"] textarea::placeholder {
+    color: #94a3b8 !important;
+    -webkit-text-fill-color: #94a3b8 !important;
+    opacity: 1 !important;
+}
+
+
+/* =========================================================
+   FILE UPLOADER
+   ========================================================= */
+
+[data-testid="stFileUploader"] section {
+    background: #ffffff !important;
+    border: 1px dashed #cbd5e1 !important;
+    border-radius: 14px !important;
+}
+
+
+[data-testid="stFileUploader"] section * {
+    color: var(--docai-text) !important;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.stButton > button {
+    min-height: 44px !important;
+
+    border-radius: 11px !important;
+
+    font-weight: 700 !important;
+
+    border: 1px solid #dbe2ea !important;
+
+    background: #ffffff !important;
+
+    color: #0f172a !important;
+}
+
+
+.stButton > button:hover {
+    border-color: #94a3b8 !important;
+
+    background: #f8fafc !important;
+
+    color: #0f172a !important;
+}
+
+
+.stButton > button[kind="primary"] {
+    background: #2563eb !important;
+
+    border-color: #2563eb !important;
+
+    color: #ffffff !important;
+}
+
+
+/* =========================================================
+   BRAND
+   ========================================================= */
+
+.docai-brand {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin: 0 0 1.35rem;
+}
+
+
+.docai-logo {
+    width: 46px;
+
+    height: 46px;
+
+    border-radius: 14px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #0f172a;
+
+    color: #ffffff !important;
+
+    font-size: 23px;
+
+    box-shadow: 0 8px 24px rgba(15,23,42,.14);
+
+    flex: 0 0 auto;
+}
+
+
+.docai-brand-title {
+    font-size: 1.08rem;
+
+    font-weight: 800;
+
+    line-height: 1.1;
+
+    color: #0f172a !important;
+}
+
+
+.docai-brand-subtitle {
+    font-size: .76rem;
+
+    color: #64748b !important;
+
+    margin-top: 4px;
+}
+
+
+.section-label {
+    font-size: .74rem;
+
+    font-weight: 800;
+
+    letter-spacing: .08em;
+
+    text-transform: uppercase;
+
+    color: #64748b !important;
+
+    margin: 1rem 0 .55rem;
+}
+
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.docai-hero {
+    padding: 2.25rem 2.25rem 2rem;
+
+    border: 1px solid var(--docai-border);
+
+    border-radius: 24px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #eef4ff 100%
+        );
+
+    box-shadow:
+        0 16px 50px rgba(15,23,42,.06);
+
+    margin-bottom: 1.15rem;
+}
+
+
+.docai-eyebrow {
+    display: inline-block;
+
+    font-size: .74rem;
+
+    font-weight: 800;
+
+    letter-spacing: .09em;
+
+    text-transform: uppercase;
+
+    color: #2563eb !important;
+
+    margin-bottom: .7rem;
+}
+
+
+.docai-hero h1 {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+
+    line-height: 1.05;
+
+    letter-spacing: -.045em;
+
+    color: #0f172a !important;
+
+    margin: 0 0 .85rem;
+}
+
+
+.docai-hero p {
+    max-width: 780px;
+
+    color: #475569 !important;
+
+    font-size: 1rem;
+
+    line-height: 1.65;
+
+    margin: 0;
+}
+
+
+/* =========================================================
+   FEATURE CARDS
+   ========================================================= */
+
+.feature-grid {
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 14px;
+
+    margin: 1rem 0 1.4rem;
+}
+
+
+.feature-card {
+    background: #ffffff;
+
+    border: 1px solid var(--docai-border);
+
+    border-radius: 18px;
+
+    padding: 1.1rem;
+
+    min-height: 118px;
+}
+
+
+.feature-icon {
+    font-size: 1.35rem;
+
+    margin-bottom: .5rem;
+}
+
+
+.feature-title {
+    font-weight: 800;
+
+    color: #0f172a !important;
+
+    margin-bottom: .25rem;
+}
+
+
+.feature-text {
+    color: #64748b !important;
+
+    font-size: .86rem;
+
+    line-height: 1.45;
+}
+
+
+/* =========================================================
+   METRICS
+   ========================================================= */
+
+[data-testid="stMetric"] {
+    background: #ffffff !important;
+
+    border: 1px solid var(--docai-border) !important;
+
+    padding: .8rem !important;
+
+    border-radius: 14px !important;
+}
+
+
+[data-testid="stMetricLabel"] *,
+[data-testid="stMetricValue"] *,
+[data-testid="stMetricDelta"] * {
+    color: #0f172a !important;
+}
+
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+[data-testid="stAlert"] * {
+    color: #0f172a !important;
+}
+
+
+/* =========================================================
+   CHAT
+   ========================================================= */
+
+[data-testid="stChatMessage"] {
+    border-radius: 16px !important;
+
+    margin-bottom: .65rem !important;
+}
+
+
+[data-testid="stChatMessage"] * {
+    color: #0f172a !important;
+}
+
+
+[data-testid="stChatInput"] {
+    background: #ffffff !important;
+
+    border-top: 1px solid var(--docai-border) !important;
+
+    padding: .65rem .75rem !important;
+}
+
+
+[data-testid="stChatInput"] > div {
+    background: #ffffff !important;
+}
+
+
+[data-testid="stChatInput"] textarea {
+    background: #ffffff !important;
+
+    color: #0f172a !important;
+
+    -webkit-text-fill-color: #0f172a !important;
+
+    border-color: #cbd5e1 !important;
+}
+
+
+[data-testid="stChatInput"] textarea::placeholder {
+    color: #64748b !important;
+
+    -webkit-text-fill-color: #64748b !important;
+}
+
+
+/* =========================================================
+   EXPANDERS
+   ========================================================= */
+
+[data-testid="stExpander"] {
+    background: #ffffff !important;
+
+    border: 1px solid var(--docai-border) !important;
+
+    border-radius: 14px !important;
+}
+
+
+[data-testid="stExpander"] summary,
+[data-testid="stExpander"] summary * {
+    color: #0f172a !important;
+}
+
+
+/* =========================================================
+   DIVIDERS
+   ========================================================= */
+
+hr {
+    border-color: var(--docai-border) !important;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.docai-footer {
+    text-align: center;
+
+    color: #94a3b8 !important;
+
+    font-size: .78rem;
+
+    padding: 2rem 0 0;
+}
+
+
+.docai-footer * {
+    color: #94a3b8 !important;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
     .block-container {
-        max-width: 1180px;
-        padding: 2rem 1.25rem 6rem 1.25rem;
+        padding: 1rem .75rem 5.5rem !important;
     }
 
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background: #ffffff;
-        border-right: 1px solid #e8edf3;
-    }
-    section[data-testid="stSidebar"] .block-container {
-        padding: 1.25rem 1rem 2rem 1rem;
-    }
 
-    /* Brand */
-    .docai-brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin: 0 0 1.5rem 0;
-    }
-    .docai-logo {
-        width: 46px;
-        height: 46px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #111827, #334155);
-        color: white;
-        font-size: 24px;
-        box-shadow: 0 8px 24px rgba(15,23,42,.14);
-        flex: 0 0 auto;
-    }
-    .docai-brand-title {
-        font-size: 1.08rem;
-        font-weight: 800;
-        line-height: 1.1;
-        color: #111827;
-        margin: 0;
-    }
-    .docai-brand-subtitle {
-        font-size: .76rem;
-        color: #64748b;
-        margin-top: 4px;
-    }
-
-    /* Hero */
     .docai-hero {
-        padding: 2.2rem 2.2rem 2rem 2.2rem;
-        border: 1px solid #e5eaf0;
-        border-radius: 24px;
-        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-        box-shadow: 0 16px 50px rgba(15,23,42,.06);
-        margin-bottom: 1.25rem;
-    }
-    .docai-eyebrow {
-        display: inline-block;
-        font-size: .76rem;
-        font-weight: 800;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        color: #475569;
-        margin-bottom: .7rem;
-    }
-    .docai-hero h1 {
-        font-size: clamp(2rem, 5vw, 3.35rem);
-        line-height: 1.05;
-        letter-spacing: -.045em;
-        color: #0f172a;
-        margin: 0 0 .85rem 0;
-    }
-    .docai-hero p {
-        max-width: 760px;
-        color: #475569;
-        font-size: 1.02rem;
-        line-height: 1.65;
-        margin: 0;
-    }
+        padding: 1.35rem 1.15rem;
 
-    /* Feature cards */
-    .feature-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
-        margin: 1.1rem 0 1.5rem 0;
-    }
-    .feature-card {
-        background: #fff;
-        border: 1px solid #e5eaf0;
         border-radius: 18px;
-        padding: 1.1rem;
-        min-height: 120px;
-    }
-    .feature-icon {
-        font-size: 1.35rem;
-        margin-bottom: .55rem;
-    }
-    .feature-title {
-        font-weight: 750;
-        color: #111827;
-        margin-bottom: .25rem;
-    }
-    .feature-text {
-        color: #64748b;
-        font-size: .86rem;
-        line-height: 1.45;
     }
 
-    /* Section labels */
-    .section-label {
-        font-size: .78rem;
-        font-weight: 800;
-        letter-spacing: .07em;
-        text-transform: uppercase;
-        color: #64748b;
-        margin: 1.2rem 0 .55rem 0;
+
+    .docai-hero h1 {
+        font-size: 2rem;
     }
 
-    /* Buttons */
-    .stButton > button {
-        border-radius: 11px;
-        min-height: 44px;
-        font-weight: 700;
-        border: 1px solid #dbe2ea;
-    }
-    .stButton > button:hover {
-        border-color: #94a3b8;
+
+    .docai-hero p {
+        font-size: .92rem;
     }
 
-    /* Chat */
-    [data-testid="stChatMessage"] {
-        border-radius: 16px;
-        margin-bottom: .65rem;
-    }
-    [data-testid="stChatInput"] {
-        padding-bottom: .5rem;
+
+    .feature-grid {
+        grid-template-columns: 1fr;
+
+        gap: 10px;
     }
 
-    /* Metrics */
+
+    .feature-card {
+        min-height: auto;
+    }
+
+
+    .docai-brand {
+        margin-bottom: 1rem;
+    }
+
+
+    section[data-testid="stSidebar"] .block-container {
+        padding: 1rem .8rem 1.5rem !important;
+    }
+
+
     [data-testid="stMetric"] {
-        background: #fff;
-        border: 1px solid #e5eaf0;
-        padding: .8rem;
-        border-radius: 14px;
+        margin-bottom: .5rem;
     }
 
-    /* Footer */
-    .docai-footer {
-        text-align: center;
-        color: #94a3b8;
-        font-size: .78rem;
-        padding: 2rem 0 0 0;
+
+    [data-testid="stChatInput"] {
+        padding-left: .35rem !important;
+
+        padding-right: .35rem !important;
     }
 
-    /* Mobile */
-    @media (max-width: 768px) {
-        .block-container {
-            padding: 1rem .75rem 5rem .75rem;
-        }
-        .docai-hero {
-            padding: 1.35rem 1.15rem;
-            border-radius: 18px;
-        }
-        .docai-hero h1 {
-            font-size: 2rem;
-        }
-        .docai-hero p {
-            font-size: .94rem;
-        }
-        .feature-grid {
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-        .feature-card {
-            min-height: auto;
-        }
-        .docai-brand {
-            margin-bottom: 1rem;
-        }
-        section[data-testid="stSidebar"] .block-container {
-            padding: 1rem .8rem 1.5rem .8rem;
-        }
-        [data-testid="stMetric"] {
-            margin-bottom: .5rem;
-        }
-    }
+}
+
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =========================================================
+# UI HELPERS
+# =========================================================
 
 def render_brand():
-    st.markdown("""
-    <div class="docai-brand">
-        <div class="docai-logo">📘</div>
-        <div>
-            <div class="docai-brand-title">DocAI</div>
-            <div class="docai-brand-subtitle">Enterprise Document Intelligence</div>
+    st.markdown(
+        """
+        <div class="docai-brand">
+
+            <div class="docai-logo">
+                📘
+            </div>
+
+            <div>
+
+                <div class="docai-brand-title">
+                    DocAI
+                </div>
+
+                <div class="docai-brand-subtitle">
+                    Enterprise Document Intelligence
+                </div>
+
+            </div>
+
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 def render_hero():
-    st.markdown("""
-    <div class="docai-hero">
-        <div class="docai-eyebrow">AI-powered document intelligence</div>
-        <h1>Ask your documents.<br>Get grounded answers.</h1>
-        <p>
-            Upload business documents or connect a public Google Drive file or folder.
-            DocAI retrieves the most relevant passages and generates answers grounded
-            only in your indexed knowledge base.
-        </p>
-    </div>
-    <div class="feature-grid">
-        <div class="feature-card">
-            <div class="feature-icon">📄</div>
-            <div class="feature-title">Multi-document</div>
-            <div class="feature-text">Work with PDF, DOCX, TXT and Markdown files in one knowledge base.</div>
+    st.markdown(
+        """
+        <div class="docai-hero">
+
+            <div class="docai-eyebrow">
+                AI-powered document intelligence
+            </div>
+
+            <h1>
+                Ask your documents.<br>
+                Get grounded answers.
+            </h1>
+
+            <p>
+                Upload business documents or connect a public
+                Google Drive file or folder. DocAI retrieves
+                the most relevant passages and generates answers
+                grounded only in your indexed knowledge base.
+            </p>
+
         </div>
-        <div class="feature-card">
-            <div class="feature-icon">🔎</div>
-            <div class="feature-title">Grounded retrieval</div>
-            <div class="feature-text">Semantic search finds relevant document passages before every answer.</div>
+
+
+        <div class="feature-grid">
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    📄
+                </div>
+
+                <div class="feature-title">
+                    Multi-document
+                </div>
+
+                <div class="feature-text">
+                    Work with PDF, DOCX, TXT and Markdown
+                    files in one knowledge base.
+                </div>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    🔎
+                </div>
+
+                <div class="feature-title">
+                    Grounded retrieval
+                </div>
+
+                <div class="feature-text">
+                    Semantic search finds relevant document
+                    passages before every answer.
+                </div>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    ☁️
+                </div>
+
+                <div class="feature-title">
+                    Google Drive
+                </div>
+
+                <div class="feature-text">
+                    Load public/shared Drive files or folders
+                    without manual downloading.
+                </div>
+
+            </div>
+
         </div>
-        <div class="feature-card">
-            <div class="feature-icon">☁️</div>
-            <div class="feature-title">Google Drive</div>
-            <div class="feature-text">Load public/shared Drive files or folders without manual downloading.</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 def render_footer():
     st.markdown(
-        '<div class="docai-footer">DocAI · Enterprise Document Intelligence · '
-        'Answers are grounded in your indexed documents.</div>',
-        unsafe_allow_html=True
+        """
+        <div class="docai-footer">
+            DocAI · Enterprise Document Intelligence ·
+            Answers are grounded in your indexed documents.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
+
+# =========================================================
+# CACHED MODELS / CLIENTS
+# =========================================================
 
 @st.cache_resource
 def load_embedding_model():
@@ -292,7 +775,12 @@ def load_groq_client(api_key: str):
     return Groq(api_key=api_key)
 
 
+# =========================================================
+# SESSION STATE
+# =========================================================
+
 def initialize_session_state():
+
     defaults = {
         "documents": [],
         "chunks": [],
@@ -300,64 +788,128 @@ def initialize_session_state():
         "chat_history": [],
         "indexed_file_names": [],
     }
+
     for key, value in defaults.items():
+
         if key not in st.session_state:
+
             st.session_state[key] = value
 
 
 initialize_session_state()
 
 
+# =========================================================
+# DOCUMENT EXTRACTION
+# =========================================================
+
 def extract_pdf_text(file_bytes: bytes) -> str:
-    reader = PdfReader(BytesIO(file_bytes))
+
+    reader = PdfReader(
+        BytesIO(file_bytes)
+    )
+
     pages = []
+
     for page in reader.pages:
+
         text = page.extract_text()
+
         if text:
             pages.append(text)
+
     return "\n\n".join(pages).strip()
 
 
 def extract_docx_text(file_bytes: bytes) -> str:
-    document = Document(BytesIO(file_bytes))
+
+    document = Document(
+        BytesIO(file_bytes)
+    )
+
     paragraphs = [
         paragraph.text
         for paragraph in document.paragraphs
         if paragraph.text.strip()
     ]
+
     return "\n".join(paragraphs).strip()
 
 
-def extract_text(file_bytes: bytes, file_name: str) -> str:
+def extract_text(
+    file_bytes: bytes,
+    file_name: str,
+) -> str:
+
     extension = file_name.lower().split(".")[-1]
 
     try:
+
         if extension == "pdf":
-            return extract_pdf_text(file_bytes)
+
+            return extract_pdf_text(
+                file_bytes
+            )
+
         if extension == "docx":
-            return extract_docx_text(file_bytes)
+
+            return extract_docx_text(
+                file_bytes
+            )
+
         if extension in {"txt", "md"}:
-            return file_bytes.decode("utf-8", errors="replace").strip()
-        raise ValueError(f"Unsupported file type: .{extension}")
+
+            return file_bytes.decode(
+                "utf-8",
+                errors="replace",
+            ).strip()
+
+        raise ValueError(
+            f"Unsupported file type: .{extension}"
+        )
+
     except Exception as exc:
+
         raise RuntimeError(
             f"Could not extract text from '{file_name}': {exc}"
         ) from exc
 
 
-def create_chunks(text: str, source_file: str) -> List[Dict]:
+# =========================================================
+# CHUNKING
+# =========================================================
+
+def create_chunks(
+    text: str,
+    source_file: str,
+) -> List[Dict]:
+
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
-        separators=["\n\n", "\n", ". ", " ", ""],
+        separators=[
+            "\n\n",
+            "\n",
+            ". ",
+            " ",
+            "",
+        ],
     )
 
-    text_chunks = splitter.split_text(text)
+    text_chunks = splitter.split_text(
+        text
+    )
+
     chunks = []
 
-    for chunk_id, chunk_text in enumerate(text_chunks):
+    for chunk_id, chunk_text in enumerate(
+        text_chunks
+    ):
+
         cleaned_text = chunk_text.strip()
+
         if cleaned_text:
+
             chunks.append(
                 {
                     "text": cleaned_text,
@@ -369,11 +921,26 @@ def create_chunks(text: str, source_file: str) -> List[Dict]:
     return chunks
 
 
-def build_faiss_index(chunks: List[Dict], embedding_model) -> faiss.Index:
-    if not chunks:
-        raise ValueError("No chunks are available for indexing.")
+# =========================================================
+# FAISS INDEX
+# =========================================================
 
-    texts = [chunk["text"] for chunk in chunks]
+def build_faiss_index(
+    chunks: List[Dict],
+    embedding_model,
+) -> faiss.Index:
+
+    if not chunks:
+
+        raise ValueError(
+            "No chunks are available for indexing."
+        )
+
+    texts = [
+        chunk["text"]
+        for chunk in chunks
+    ]
+
     embeddings = embedding_model.encode(
         texts,
         convert_to_numpy=True,
@@ -381,14 +948,30 @@ def build_faiss_index(chunks: List[Dict], embedding_model) -> faiss.Index:
         show_progress_bar=False,
     )
 
-    embeddings = np.asarray(embeddings, dtype=np.float32)
+    embeddings = np.asarray(
+        embeddings,
+        dtype=np.float32,
+    )
+
     dimension = embeddings.shape[1]
 
-    # Inner product on normalized embeddings is cosine similarity.
-    index = faiss.IndexFlatIP(dimension)
-    index.add(embeddings)
+    # Inner product on normalized embeddings
+    # is cosine similarity.
+
+    index = faiss.IndexFlatIP(
+        dimension
+    )
+
+    index.add(
+        embeddings
+    )
+
     return index
 
+
+# =========================================================
+# RETRIEVAL
+# =========================================================
 
 def retrieve_chunks(
     query: str,
@@ -397,7 +980,12 @@ def retrieve_chunks(
     embedding_model,
     top_k: int = TOP_K,
 ) -> List[Tuple[Dict, float]]:
-    if index is None or index.ntotal == 0:
+
+    if (
+        index is None
+        or index.ntotal == 0
+    ):
+
         return []
 
     query_embedding = embedding_model.encode(
@@ -406,28 +994,60 @@ def retrieve_chunks(
         normalize_embeddings=True,
         show_progress_bar=False,
     )
-    query_embedding = np.asarray(query_embedding, dtype=np.float32)
 
-    k = min(top_k, index.ntotal)
-    scores, indices = index.search(query_embedding, k)
+    query_embedding = np.asarray(
+        query_embedding,
+        dtype=np.float32,
+    )
+
+    k = min(
+        top_k,
+        index.ntotal,
+    )
+
+    scores, indices = index.search(
+        query_embedding,
+        k,
+    )
 
     results = []
-    for score, index_position in zip(scores[0], indices[0]):
+
+    for score, index_position in zip(
+        scores[0],
+        indices[0],
+    ):
+
         if index_position >= 0:
-            results.append((chunks[index_position], float(score)))
+
+            results.append(
+                (
+                    chunks[index_position],
+                    float(score),
+                )
+            )
 
     return results
 
+
+# =========================================================
+# GROUNDED PROMPT
+# =========================================================
 
 def build_grounded_prompt(
     query: str,
     retrieved_chunks: List[Tuple[Dict, float]],
 ) -> str:
+
     context_parts = []
 
-    for position, (chunk, _score) in enumerate(
-        retrieved_chunks, start=1
+    for position, (
+        chunk,
+        _score,
+    ) in enumerate(
+        retrieved_chunks,
+        start=1,
     ):
+
         context_parts.append(
             f"""
 --- CONTEXT SNIPPET {position} ---
@@ -439,7 +1059,9 @@ Chunk ID: {chunk["chunk_id"]}
 """
         )
 
-    context = "\n".join(context_parts)
+    context = "\n".join(
+        context_parts
+    )
 
     return f"""
 You are an enterprise document question-answering assistant.
@@ -466,33 +1088,53 @@ USER QUESTION:
 """
 
 
+# =========================================================
+# GROQ ANSWER GENERATION
+# =========================================================
+
 def generate_answer(
     query: str,
     retrieved_chunks: List[Tuple[Dict, float]],
     groq_client: Groq,
 ) -> str:
-    if not retrieved_chunks:
-        return "Information not found in the uploaded documents."
 
-    prompt = build_grounded_prompt(query, retrieved_chunks)
+    if not retrieved_chunks:
+
+        return (
+            "Information not found in the uploaded documents."
+        )
+
+    prompt = build_grounded_prompt(
+        query,
+        retrieved_chunks,
+    )
 
     response = groq_client.chat.completions.create(
         model=GROQ_MODEL_NAME,
+
         messages=[
             {
                 "role": "system",
                 "content": (
-                    "You are a strictly grounded document question-answering "
-                    "system. Never use knowledge outside the supplied context."
+                    "You are a strictly grounded document "
+                    "question-answering system. Never use "
+                    "knowledge outside the supplied context."
                 ),
             },
-            {"role": "user", "content": prompt},
+
+            {
+                "role": "user",
+                "content": prompt,
+            },
         ],
+
         temperature=0,
+
         max_tokens=1200,
     )
 
     answer = response.choices[0].message.content
+
     return (
         answer.strip()
         if answer and answer.strip()
@@ -500,65 +1142,139 @@ def generate_answer(
     )
 
 
-def process_file_items(file_items) -> None:
-    """Process local files represented as (file_name, file_bytes)."""
-    all_chunks = []
-    documents = []
-    progress = st.progress(0)
-    total_files = len(file_items)
+# =========================================================
+# DOCUMENT PROCESSING
+# =========================================================
 
-    for file_number, (file_name, file_bytes) in enumerate(
-        file_items, start=1
+def process_file_items(
+    file_items,
+) -> None:
+
+    """
+    Process local or Google Drive files represented as:
+
+        (file_name, file_bytes)
+    """
+
+    all_chunks = []
+
+    documents = []
+
+    progress = st.progress(
+        0
+    )
+
+    total_files = len(
+        file_items
+    )
+
+    for file_number, (
+        file_name,
+        file_bytes,
+    ) in enumerate(
+        file_items,
+        start=1,
     ):
+
         try:
+
             if not file_bytes:
-                st.warning(f"'{file_name}' is empty and was skipped.")
+
+                st.warning(
+                    f"'{file_name}' is empty and was skipped."
+                )
+
                 continue
 
-            text = extract_text(file_bytes, file_name)
+            text = extract_text(
+                file_bytes,
+                file_name,
+            )
 
             if not text.strip():
+
                 st.warning(
                     f"No readable text was found in '{file_name}'."
                 )
+
                 continue
 
-            chunks = create_chunks(text, file_name)
+            chunks = create_chunks(
+                text,
+                file_name,
+            )
 
             if not chunks:
+
                 st.warning(
                     f"No chunks could be created from '{file_name}'."
                 )
+
                 continue
 
-            documents.append({"file_name": file_name, "text": text})
-            all_chunks.extend(chunks)
+            documents.append(
+                {
+                    "file_name": file_name,
+                    "text": text,
+                }
+            )
+
+            all_chunks.extend(
+                chunks
+            )
 
         except Exception as exc:
-            st.error(f"Error processing '{file_name}': {exc}")
 
-        progress.progress(file_number / total_files)
+            st.error(
+                f"Error processing '{file_name}': {exc}"
+            )
+
+        progress.progress(
+            file_number / total_files
+        )
 
     progress.empty()
 
     if not all_chunks:
-        st.error("No usable text was found in the documents.")
+
+        st.error(
+            "No usable text was found in the documents."
+        )
+
         return
 
     try:
-        embedding_model = load_embedding_model()
+
+        embedding_model = (
+            load_embedding_model()
+        )
 
         with st.spinner(
             "Generating embeddings and building FAISS index..."
         ):
-            index = build_faiss_index(all_chunks, embedding_model)
 
-        st.session_state.documents = documents
-        st.session_state.chunks = all_chunks
-        st.session_state.index = index
+            index = build_faiss_index(
+                all_chunks,
+                embedding_model,
+            )
+
+        st.session_state.documents = (
+            documents
+        )
+
+        st.session_state.chunks = (
+            all_chunks
+        )
+
+        st.session_state.index = (
+            index
+        )
+
         st.session_state.indexed_file_names = [
-            document["file_name"] for document in documents
+            document["file_name"]
+            for document in documents
         ]
+
         st.session_state.chat_history = []
 
         st.success(
@@ -567,218 +1283,459 @@ def process_file_items(file_items) -> None:
         )
 
     except Exception as exc:
-        st.error(f"Could not build the vector index: {exc}")
+
+        st.error(
+            f"Could not build the vector index: {exc}"
+        )
 
 
-def process_uploaded_files(uploaded_files) -> None:
+def process_uploaded_files(
+    uploaded_files,
+) -> None:
+
     file_items = [
-        (uploaded_file.name, uploaded_file.getvalue())
+        (
+            uploaded_file.name,
+            uploaded_file.getvalue(),
+        )
+
         for uploaded_file in uploaded_files
     ]
-    process_file_items(file_items)
+
+    process_file_items(
+        file_items
+    )
 
 
-def download_google_drive_files(drive_url: str):
+# =========================================================
+# GOOGLE DRIVE
+# =========================================================
+
+def download_google_drive_files(
+    drive_url: str,
+):
+
     """
-    Download a public/shared Google Drive file or folder into a temporary
-    directory and return a list of (display_name, bytes).
+    Download a public/shared Google Drive file
+    or folder into a temporary directory.
+
+    Returns:
+
+        [
+            (display_name, bytes),
+            ...
+        ]
 
     The Drive item must be shared as:
-    Anyone with the link -> Viewer.
+
+        Anyone with the link -> Viewer
     """
+
     drive_url = drive_url.strip()
 
     if not drive_url:
-        raise ValueError("Please paste a Google Drive file or folder link.")
 
-    if "drive.google.com" not in drive_url and "docs.google.com" not in drive_url:
         raise ValueError(
-            "Please provide a valid Google Drive or Google Docs share link."
+            "Please paste a Google Drive file or folder link."
         )
 
-    temp_dir = tempfile.mkdtemp(prefix="rag_drive_")
+    if (
+        "drive.google.com" not in drive_url
+        and "docs.google.com" not in drive_url
+    ):
+
+        raise ValueError(
+            "Please provide a valid Google Drive "
+            "or Google Docs share link."
+        )
+
+    temp_dir = tempfile.mkdtemp(
+        prefix="rag_drive_"
+    )
 
     try:
+
         downloaded_paths = []
 
-        with st.spinner("Downloading documents from Google Drive..."):
-            # Folder links are automatically recognized by gdown.
+        with st.spinner(
+            "Downloading documents from Google Drive..."
+        ):
+
             if "/folders/" in drive_url:
-                folder_paths = gdown.download_folder(
-                    url=drive_url,
-                    output=temp_dir,
-                    quiet=True,
-                    use_cookies=False,
+
+                folder_paths = (
+                    gdown.download_folder(
+                        url=drive_url,
+                        output=temp_dir,
+                        quiet=True,
+                        use_cookies=False,
+                    )
                 )
 
                 if folder_paths:
-                    downloaded_paths.extend(folder_paths)
+
+                    downloaded_paths.extend(
+                        folder_paths
+                    )
 
             else:
-                # output=temp_dir lets gdown determine the original filename.
-                downloaded_path = gdown.download(
-                    url=drive_url,
-                    output=temp_dir,
-                    quiet=True,
+
+                downloaded_path = (
+                    gdown.download(
+                        url=drive_url,
+                        output=temp_dir,
+                        quiet=True,
+                    )
                 )
 
                 if downloaded_path:
-                    downloaded_paths.append(downloaded_path)
+
+                    downloaded_paths.append(
+                        downloaded_path
+                    )
 
         if not downloaded_paths:
+
             raise RuntimeError(
-                "Google Drive did not return any downloadable files."
+                "Google Drive did not return "
+                "any downloadable files."
             )
 
         file_items = []
-        supported_count = 0
 
         for raw_path in downloaded_paths:
-            path = Path(raw_path)
+
+            path = Path(
+                raw_path
+            )
 
             if not path.is_file():
+
                 continue
 
-            extension = path.suffix.lower().lstrip(".")
+            extension = (
+                path.suffix
+                .lower()
+                .lstrip(".")
+            )
+
             if extension not in SUPPORTED_TYPES:
+
                 continue
 
             try:
-                file_items.append((path.name, path.read_bytes()))
-                supported_count += 1
+
+                file_items.append(
+                    (
+                        path.name,
+                        path.read_bytes(),
+                    )
+                )
+
             except Exception as exc:
+
                 st.warning(
-                    f"Could not read '{path.name}' from the downloaded Drive data: {exc}"
+                    f"Could not read '{path.name}' "
+                    f"from the downloaded Drive data: {exc}"
                 )
 
         if not file_items:
+
             raise RuntimeError(
                 "No supported documents were found. "
-                "The Drive file/folder must contain PDF, DOCX, TXT, or MD files."
+                "The Drive file/folder must contain "
+                "PDF, DOCX, TXT, or MD files."
             )
 
         return file_items
 
     except Exception:
-        raise
-    finally:
-        # The files are already in memory, so remove the temporary downloads.
-        shutil.rmtree(temp_dir, ignore_errors=True)
 
+        raise
+
+    finally:
+
+        shutil.rmtree(
+            temp_dir,
+            ignore_errors=True,
+        )
+
+
+# =========================================================
+# SIDEBAR
+# =========================================================
 
 with st.sidebar:
+
     render_brand()
-    st.markdown('<div class="section-label">Knowledge base</div>', unsafe_allow_html=True)
-    st.caption("Build a private, session-based knowledge base from your documents.")
+
+
+    # -----------------------------------------------------
+    # KNOWLEDGE BASE
+    # -----------------------------------------------------
+
+    st.markdown(
+        '<div class="section-label">Knowledge base</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.caption(
+        "Build a session-based knowledge base "
+        "from your documents."
+    )
+
 
     uploaded_files = st.file_uploader(
         "Upload documents",
+
         type=SUPPORTED_TYPES,
+
         accept_multiple_files=True,
-        help="Supported formats: PDF, DOCX, TXT and Markdown.",
-    )
 
-    if uploaded_files and st.button(
-        "🔄 Process Uploaded Documents",
-        use_container_width=True,
-    ):
-        process_uploaded_files(uploaded_files)
-
-    st.divider()
-
-    st.subheader("☁️ Google Drive")
-    st.caption(
-        "Use a public/shared Google Drive file or folder. "
-        "Set sharing to 'Anyone with the link → Viewer'."
-    )
-
-    drive_url = st.text_input(
-        "Google Drive link",
-        placeholder="https://drive.google.com/drive/folders/...",
         help=(
-            "Paste a Google Drive file/folder link. "
-            "The link must be accessible to anyone with the link."
+            "Supported formats: PDF, DOCX, "
+            "TXT and Markdown."
         ),
     )
 
-    if st.button(
-        "☁️ Load from Google Drive",
+
+    if uploaded_files and st.button(
+        "🔄 Process Uploaded Documents",
+
         use_container_width=True,
     ):
+
+        process_uploaded_files(
+            uploaded_files
+        )
+
+
+    st.divider()
+
+
+    # -----------------------------------------------------
+    # GOOGLE DRIVE
+    # -----------------------------------------------------
+
+    st.markdown(
+        '<div class="section-label">Google Drive</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.caption(
+        "Use a public/shared Google Drive file "
+        "or folder. Sharing must be set to "
+        "'Anyone with the link → Viewer'."
+    )
+
+
+    drive_url = st.text_input(
+        "Google Drive link",
+
+        placeholder=(
+            "https://drive.google.com/drive/folders/..."
+        ),
+
+        help=(
+            "Paste a public/shared Google Drive "
+            "or Google Docs link."
+        ),
+    )
+
+
+    if st.button(
+        "☁️ Load from Google Drive",
+
+        use_container_width=True,
+    ):
+
         if not drive_url.strip():
-            st.warning("Please paste a Google Drive link first.")
+
+            st.warning(
+                "Please paste a Google Drive link first."
+            )
+
         else:
+
             try:
-                drive_file_items = download_google_drive_files(drive_url)
+
+                drive_file_items = (
+                    download_google_drive_files(
+                        drive_url
+                    )
+                )
 
                 st.success(
-                    f"Downloaded {len(drive_file_items)} supported "
+                    f"Downloaded "
+                    f"{len(drive_file_items)} supported "
                     f"document(s) from Google Drive."
                 )
 
-                process_file_items(drive_file_items)
-
-            except Exception as exc:
-                st.error(
-                    "Could not load the Google Drive documents. "
-                    f"Details: {exc}"
+                process_file_items(
+                    drive_file_items
                 )
 
+            except Exception as exc:
+
+                st.error(
+                    "Could not load the Google Drive "
+                    f"documents. Details: {exc}"
+                )
+
+
     st.divider()
-    st.subheader("Knowledge Base")
+
+
+    # -----------------------------------------------------
+    # KNOWLEDGE BASE STATUS
+    # -----------------------------------------------------
+
+    st.markdown(
+        '<div class="section-label">Knowledge base status</div>',
+        unsafe_allow_html=True,
+    )
+
 
     if st.session_state.index is not None:
-        st.metric("Documents", len(st.session_state.documents))
-        st.metric("Text Chunks", len(st.session_state.chunks))
-        st.caption("Indexed files:")
-        for file_name in st.session_state.indexed_file_names:
-            st.write(f"• {file_name}")
+
+        st.metric(
+            "Documents",
+            len(
+                st.session_state.documents
+            ),
+        )
+
+        st.metric(
+            "Text Chunks",
+            len(
+                st.session_state.chunks
+            ),
+        )
+
+        st.caption(
+            "Indexed files:"
+        )
+
+        for file_name in (
+            st.session_state.indexed_file_names
+        ):
+
+            st.write(
+                f"• {file_name}"
+            )
+
     else:
-        st.info("No documents indexed yet.")
+
+        st.info(
+            "No documents indexed yet."
+        )
+
 
     st.divider()
+
+
+    # -----------------------------------------------------
+    # CLEAR KNOWLEDGE BASE
+    # -----------------------------------------------------
 
     if st.button(
         "🗑️ Clear Knowledge Base",
+
         use_container_width=True,
     ):
+
         st.session_state.documents = []
+
         st.session_state.chunks = []
+
         st.session_state.index = None
+
         st.session_state.indexed_file_names = []
+
         st.session_state.chat_history = []
+
         st.rerun()
 
 
+# =========================================================
+# MAIN HERO
+# =========================================================
+
 render_hero()
 
+
+# =========================================================
+# GROQ API
+# =========================================================
+
 groq_api_key = None
+
 try:
-    groq_api_key = st.secrets.get("GROQ_API_KEY")
+
+    groq_api_key = st.secrets.get(
+        "GROQ_API_KEY"
+    )
+
 except Exception:
+
     groq_api_key = None
 
+
 if not groq_api_key:
+
     st.warning(
-        "Groq API key is missing. Add GROQ_API_KEY to "
-        ".streamlit/secrets.toml."
+        "Groq API key is missing. Add "
+        "GROQ_API_KEY to .streamlit/secrets.toml."
     )
+
     st.stop()
+
 
 try:
-    groq_client = load_groq_client(groq_api_key)
+
+    groq_client = load_groq_client(
+        groq_api_key
+    )
+
 except Exception as exc:
-    st.error(f"Could not initialize Groq client: {exc}")
+
+    st.error(
+        f"Could not initialize Groq client: {exc}"
+    )
+
     st.stop()
 
 
-for message in st.session_state.chat_history:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# =========================================================
+# CHAT HISTORY
+# =========================================================
 
-        if message["role"] == "assistant" and message.get("sources"):
-            with st.expander("📖 Sources Used"):
-                for source in message["sources"]:
+for message in (
+    st.session_state.chat_history
+):
+
+    with st.chat_message(
+        message["role"]
+    ):
+
+        st.markdown(
+            message["content"]
+        )
+
+
+        if (
+            message["role"] == "assistant"
+            and message.get("sources")
+        ):
+
+            with st.expander(
+                "📖 Sources Used"
+            ):
+
+                for source in (
+                    message["sources"]
+                ):
+
                     st.markdown(
                         f"""
 **Source:** `{source["source_file"]}`  
@@ -790,57 +1747,150 @@ for message in st.session_state.chat_history:
                     )
 
 
+# =========================================================
+# CHAT
+# =========================================================
+
 if st.session_state.index is None:
+
     st.info(
-        "Upload/process documents or load documents from Google Drive "
-        "before asking a question."
+        "Upload/process documents or load documents "
+        "from Google Drive before asking a question."
     )
+
 else:
-    query = st.chat_input("Ask a question about your documents...")
+
+    query = st.chat_input(
+        "Ask a question about your documents..."
+    )
+
 
     if query:
+
         query = query.strip()
 
+
         if not query:
-            st.warning("Please enter a question.")
+
+            st.warning(
+                "Please enter a question."
+            )
+
             st.stop()
 
-        with st.chat_message("user"):
-            st.markdown(query)
+
+        # -------------------------------------------------
+        # USER MESSAGE
+        # -------------------------------------------------
+
+        with st.chat_message(
+            "user"
+        ):
+
+            st.markdown(
+                query
+            )
+
 
         st.session_state.chat_history.append(
-            {"role": "user", "content": query}
+            {
+                "role": "user",
+                "content": query,
+            }
         )
 
-        try:
-            embedding_model = load_embedding_model()
 
-            with st.spinner("Searching the knowledge base..."):
-                retrieved_chunks = retrieve_chunks(
-                    query=query,
-                    index=st.session_state.index,
-                    chunks=st.session_state.chunks,
-                    embedding_model=embedding_model,
-                    top_k=TOP_K,
+        # -------------------------------------------------
+        # RETRIEVAL
+        # -------------------------------------------------
+
+        try:
+
+            embedding_model = (
+                load_embedding_model()
+            )
+
+
+            with st.spinner(
+                "Searching the knowledge base..."
+            ):
+
+                retrieved_chunks = (
+                    retrieve_chunks(
+                        query=query,
+
+                        index=(
+                            st.session_state.index
+                        ),
+
+                        chunks=(
+                            st.session_state.chunks
+                        ),
+
+                        embedding_model=(
+                            embedding_model
+                        ),
+
+                        top_k=TOP_K,
+                    )
                 )
+
+
         except Exception as exc:
-            st.error(f"Error during vector search: {exc}")
+
+            st.error(
+                f"Error during vector search: {exc}"
+            )
+
             st.stop()
 
-        with st.chat_message("assistant"):
+
+        # -------------------------------------------------
+        # ANSWER
+        # -------------------------------------------------
+
+        with st.chat_message(
+            "assistant"
+        ):
+
             try:
-                with st.spinner("Generating grounded answer..."):
+
+                with st.spinner(
+                    "Generating grounded answer..."
+                ):
+
                     answer = generate_answer(
                         query=query,
-                        retrieved_chunks=retrieved_chunks,
-                        groq_client=groq_client,
+
+                        retrieved_chunks=(
+                            retrieved_chunks
+                        ),
+
+                        groq_client=(
+                            groq_client
+                        ),
                     )
 
-                st.markdown(answer)
+
+                st.markdown(
+                    answer
+                )
+
+
+                # -----------------------------------------
+                # SOURCES
+                # -----------------------------------------
 
                 if retrieved_chunks:
-                    with st.expander("📖 Sources Used"):
-                        for chunk, score in retrieved_chunks:
+
+                    with st.expander(
+                        "📖 Sources Used"
+                    ):
+
+                        for chunk, score in (
+                            retrieved_chunks
+                        ):
+
                             st.markdown(
                                 f"""
 **Source:** `{chunk["source_file"]}`  
@@ -850,22 +1900,45 @@ else:
 > {chunk["text"]}
 """
                             )
+
+
             except Exception as exc:
+
                 answer = (
-                    "An error occurred while generating "
-                    f"the answer: {exc}"
+                    "An error occurred while "
+                    f"generating the answer: {exc}"
                 )
-                st.error(answer)
+
+                st.error(
+                    answer
+                )
+
+
+        # -------------------------------------------------
+        # SAVE ASSISTANT MESSAGE
+        # -------------------------------------------------
 
         st.session_state.chat_history.append(
             {
                 "role": "assistant",
+
                 "content": answer,
+
                 "sources": [
-                    {**chunk, "score": score}
-                    for chunk, score in retrieved_chunks
+                    {
+                        **chunk,
+                        "score": score,
+                    }
+
+                    for chunk, score
+                    in retrieved_chunks
                 ],
             }
         )
+
+
+# =========================================================
+# FOOTER
+# =========================================================
 
 render_footer()
