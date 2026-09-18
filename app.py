@@ -21,14 +21,22 @@ from groq import Groq
 # =========================================================
 
 APP_TITLE = "DocAI — Enterprise Document Intelligence"
+
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
-GROQ_MODEL_NAME = "llama-3.3-70b-versatile"
+
+GROQ_MODEL_NAME = "openai/gpt-oss-120b"
 
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 150
+
 TOP_K = 5
 
-SUPPORTED_TYPES = ["pdf", "docx", "txt", "md"]
+SUPPORTED_TYPES = [
+    "pdf",
+    "docx",
+    "txt",
+    "md",
+]
 
 
 # =========================================================
@@ -44,206 +52,130 @@ st.set_page_config(
 
 
 # =========================================================
-# PROFESSIONAL UI / THEME
+# PROFESSIONAL CSS
 # =========================================================
 
 st.markdown(
     """
 <style>
 
-/* =========================================================
-   DOC AI PROFESSIONAL LIGHT THEME
-   ========================================================= */
+/* =======================================================
+   GLOBAL THEME
+   ======================================================= */
 
 :root {
     color-scheme: light !important;
 
     --docai-bg: #f7f9fc;
     --docai-surface: #ffffff;
-    --docai-surface-2: #f1f5f9;
+    --docai-surface-soft: #f8fafc;
+
     --docai-border: #e2e8f0;
 
     --docai-text: #0f172a;
     --docai-muted: #64748b;
 
-    --docai-accent: #2563eb;
-    --docai-accent-dark: #1d4ed8;
+    --docai-primary: #2563eb;
+    --docai-primary-dark: #1d4ed8;
 }
 
 
-/* =========================================================
-   FORCE STREAMLIT LIGHT THEME
-   ========================================================= */
+/* Streamlit theme variables */
+
+html {
+    --st-background-color: #f7f9fc !important;
+    --st-secondary-background-color: #ffffff !important;
+    --st-text-color: #0f172a !important;
+    --st-border-color: #e2e8f0 !important;
+    --st-primary-color: #2563eb !important;
+}
+
 
 html,
 body {
     color-scheme: light !important;
 }
 
-html {
-    --st-background-color: var(--docai-bg) !important;
-    --st-secondary-background-color: var(--docai-surface) !important;
-    --st-text-color: var(--docai-text) !important;
-    --st-border-color: var(--docai-border) !important;
-    --st-primary-color: var(--docai-accent) !important;
+
+body {
+    background: #f7f9fc !important;
 }
 
+
+/* =======================================================
+   APP BACKGROUND
+   ======================================================= */
 
 [data-testid="stAppViewContainer"] {
-    background: var(--docai-bg) !important;
-    color: var(--docai-text) !important;
+    background: #f7f9fc !important;
+    color: #0f172a !important;
 }
 
 
-[data-testid="stAppViewContainer"] *,
-[data-testid="stSidebar"] * {
-    color: var(--docai-text);
+[data-testid="stMain"] {
+    background: #f7f9fc !important;
 }
 
-
-/* =========================================================
-   MAIN LAYOUT
-   ========================================================= */
 
 .block-container {
     max-width: 1180px !important;
-    padding: 1.75rem 1.25rem 6rem !important;
+
+    padding-top: 1.5rem !important;
+    padding-bottom: 6rem !important;
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
 }
 
 
-/* =========================================================
+/* =======================================================
    SIDEBAR
-   ========================================================= */
+   ======================================================= */
 
 section[data-testid="stSidebar"] {
-    background: var(--docai-surface) !important;
-    border-right: 1px solid var(--docai-border) !important;
+    background: #ffffff !important;
+
+    border-right: 1px solid #e2e8f0 !important;
 }
+
 
 section[data-testid="stSidebar"] > div {
-    background: var(--docai-surface) !important;
+    background: #ffffff !important;
 }
+
 
 section[data-testid="stSidebar"] .block-container {
-    padding: 1.25rem 1rem 2rem !important;
+    padding: 1.25rem 1rem 2rem 1rem !important;
 }
 
 
-/* =========================================================
+/* =======================================================
    GENERAL TEXT
-   ========================================================= */
+   ======================================================= */
 
-[data-testid="stSidebar"] label,
+[data-testid="stAppViewContainer"] p,
+[data-testid="stAppViewContainer"] span,
+[data-testid="stAppViewContainer"] label,
+[data-testid="stAppViewContainer"] div {
+    color: #0f172a;
+}
+
+
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] span,
-[data-testid="stSidebar"] small,
-[data-testid="stSidebar"] div,
-[data-testid="stAppViewContainer"] label,
-[data-testid="stAppViewContainer"] p,
-[data-testid="stAppViewContainer"] span {
-    color: var(--docai-text);
-}
-
-
-[data-testid="stCaptionContainer"] *,
-[data-testid="stMarkdownContainer"] p,
-[data-testid="stMarkdownContainer"] li,
-[data-testid="stMarkdownContainer"] strong,
-[data-testid="stMarkdownContainer"] em {
-    color: var(--docai-text) !important;
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] div {
+    color: #0f172a;
 }
 
 
 [data-testid="stCaptionContainer"] * {
-    color: var(--docai-muted) !important;
+    color: #64748b !important;
 }
 
 
-/* =========================================================
-   INPUTS
-   ========================================================= */
-
-[data-baseweb="input"],
-[data-baseweb="textarea"],
-[data-baseweb="select"] {
-    background: #ffffff !important;
-    border-color: var(--docai-border) !important;
-}
-
-
-[data-baseweb="input"] input,
-[data-baseweb="textarea"] textarea,
-[data-baseweb="select"] * {
-    background: #ffffff !important;
-    color: var(--docai-text) !important;
-    -webkit-text-fill-color: var(--docai-text) !important;
-}
-
-
-[data-baseweb="input"] input::placeholder,
-[data-baseweb="textarea"] textarea::placeholder {
-    color: #94a3b8 !important;
-    -webkit-text-fill-color: #94a3b8 !important;
-    opacity: 1 !important;
-}
-
-
-/* =========================================================
-   FILE UPLOADER
-   ========================================================= */
-
-[data-testid="stFileUploader"] section {
-    background: #ffffff !important;
-    border: 1px dashed #cbd5e1 !important;
-    border-radius: 14px !important;
-}
-
-
-[data-testid="stFileUploader"] section * {
-    color: var(--docai-text) !important;
-}
-
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-
-.stButton > button {
-    min-height: 44px !important;
-
-    border-radius: 11px !important;
-
-    font-weight: 700 !important;
-
-    border: 1px solid #dbe2ea !important;
-
-    background: #ffffff !important;
-
-    color: #0f172a !important;
-}
-
-
-.stButton > button:hover {
-    border-color: #94a3b8 !important;
-
-    background: #f8fafc !important;
-
-    color: #0f172a !important;
-}
-
-
-.stButton > button[kind="primary"] {
-    background: #2563eb !important;
-
-    border-color: #2563eb !important;
-
-    color: #ffffff !important;
-}
-
-
-/* =========================================================
-   BRAND
-   ========================================================= */
+/* =======================================================
+   SIDEBAR BRAND
+   ======================================================= */
 
 .docai-brand {
     display: flex;
@@ -252,7 +184,7 @@ section[data-testid="stSidebar"] .block-container {
 
     gap: 12px;
 
-    margin: 0 0 1.35rem;
+    margin-bottom: 1.5rem;
 }
 
 
@@ -275,58 +207,52 @@ section[data-testid="stSidebar"] .block-container {
 
     font-size: 23px;
 
-    box-shadow: 0 8px 24px rgba(15,23,42,.14);
-
-    flex: 0 0 auto;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
 }
 
 
 .docai-brand-title {
+    color: #0f172a !important;
+
     font-size: 1.08rem;
 
     font-weight: 800;
 
     line-height: 1.1;
-
-    color: #0f172a !important;
 }
 
 
 .docai-brand-subtitle {
-    font-size: .76rem;
-
     color: #64748b !important;
+
+    font-size: 0.76rem;
 
     margin-top: 4px;
 }
 
 
 .section-label {
-    font-size: .74rem;
+    color: #64748b !important;
+
+    font-size: 0.72rem;
 
     font-weight: 800;
 
-    letter-spacing: .08em;
+    letter-spacing: 0.09em;
 
     text-transform: uppercase;
 
-    color: #64748b !important;
+    margin-top: 1rem;
 
-    margin: 1rem 0 .55rem;
+    margin-bottom: 0.55rem;
 }
 
 
-/* =========================================================
+/* =======================================================
    HERO
-   ========================================================= */
+   ======================================================= */
 
 .docai-hero {
-    padding: 2.25rem 2.25rem 2rem;
-
-    border: 1px solid var(--docai-border);
-
-    border-radius: 24px;
-
     background:
         linear-gradient(
             135deg,
@@ -334,47 +260,53 @@ section[data-testid="stSidebar"] .block-container {
             #eef4ff 100%
         );
 
-    box-shadow:
-        0 16px 50px rgba(15,23,42,.06);
+    border: 1px solid #e2e8f0;
 
-    margin-bottom: 1.15rem;
+    border-radius: 24px;
+
+    padding: 2.35rem 2.25rem 2.1rem;
+
+    margin-bottom: 1rem;
+
+    box-shadow:
+        0 16px 50px rgba(15, 23, 42, 0.06);
 }
 
 
 .docai-eyebrow {
-    display: inline-block;
+    color: #2563eb !important;
 
-    font-size: .74rem;
+    font-size: 0.73rem;
 
     font-weight: 800;
 
-    letter-spacing: .09em;
+    letter-spacing: 0.1em;
 
     text-transform: uppercase;
 
-    color: #2563eb !important;
-
-    margin-bottom: .7rem;
+    margin-bottom: 0.7rem;
 }
 
 
 .docai-hero h1 {
-    font-size: clamp(2rem, 5vw, 3.25rem);
+    color: #0f172a !important;
+
+    font-size: clamp(2rem, 5vw, 3.2rem);
 
     line-height: 1.05;
 
-    letter-spacing: -.045em;
+    letter-spacing: -0.045em;
 
-    color: #0f172a !important;
+    margin: 0 0 0.9rem 0;
 
-    margin: 0 0 .85rem;
+    font-weight: 800;
 }
 
 
 .docai-hero p {
-    max-width: 780px;
-
     color: #475569 !important;
+
+    max-width: 780px;
 
     font-size: 1rem;
 
@@ -384,71 +316,159 @@ section[data-testid="stSidebar"] .block-container {
 }
 
 
-/* =========================================================
+/* =======================================================
    FEATURE CARDS
-   ========================================================= */
+   ======================================================= */
 
 .feature-grid {
     display: grid;
 
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
 
     gap: 14px;
 
-    margin: 1rem 0 1.4rem;
+    margin-bottom: 1.5rem;
 }
 
 
 .feature-card {
     background: #ffffff;
 
-    border: 1px solid var(--docai-border);
+    border: 1px solid #e2e8f0;
 
     border-radius: 18px;
 
-    padding: 1.1rem;
+    padding: 1.15rem;
 
-    min-height: 118px;
+    min-height: 125px;
+
+    box-shadow:
+        0 8px 25px rgba(15, 23, 42, 0.035);
 }
 
 
 .feature-icon {
     font-size: 1.35rem;
 
-    margin-bottom: .5rem;
+    margin-bottom: 0.55rem;
 }
 
 
 .feature-title {
-    font-weight: 800;
-
     color: #0f172a !important;
 
-    margin-bottom: .25rem;
+    font-weight: 800;
+
+    font-size: 0.96rem;
+
+    margin-bottom: 0.3rem;
 }
 
 
 .feature-text {
     color: #64748b !important;
 
-    font-size: .86rem;
+    font-size: 0.84rem;
 
-    line-height: 1.45;
+    line-height: 1.5;
 }
 
 
-/* =========================================================
+/* =======================================================
+   INPUTS
+   ======================================================= */
+
+[data-baseweb="input"],
+[data-baseweb="textarea"],
+[data-baseweb="select"] {
+    background: #ffffff !important;
+
+    border-color: #cbd5e1 !important;
+}
+
+
+[data-baseweb="input"] input,
+[data-baseweb="textarea"] textarea,
+[data-baseweb="select"] input {
+    background: #ffffff !important;
+
+    color: #0f172a !important;
+
+    -webkit-text-fill-color: #0f172a !important;
+}
+
+
+[data-baseweb="input"] input::placeholder,
+[data-baseweb="textarea"] textarea::placeholder {
+    color: #94a3b8 !important;
+
+    -webkit-text-fill-color: #94a3b8 !important;
+
+    opacity: 1 !important;
+}
+
+
+/* =======================================================
+   FILE UPLOADER
+   ======================================================= */
+
+[data-testid="stFileUploader"] section {
+    background: #ffffff !important;
+
+    border: 1px dashed #cbd5e1 !important;
+
+    border-radius: 14px !important;
+}
+
+
+[data-testid="stFileUploader"] section * {
+    color: #0f172a !important;
+}
+
+
+/* =======================================================
+   BUTTONS
+   ======================================================= */
+
+.stButton > button {
+    min-height: 44px !important;
+
+    border-radius: 11px !important;
+
+    border: 1px solid #dbe2ea !important;
+
+    background: #ffffff !important;
+
+    color: #0f172a !important;
+
+    font-weight: 700 !important;
+
+    box-shadow: none !important;
+}
+
+
+.stButton > button:hover {
+    background: #f8fafc !important;
+
+    border-color: #94a3b8 !important;
+
+    color: #0f172a !important;
+}
+
+
+/* =======================================================
    METRICS
-   ========================================================= */
+   ======================================================= */
 
 [data-testid="stMetric"] {
     background: #ffffff !important;
 
-    border: 1px solid var(--docai-border) !important;
-
-    padding: .8rem !important;
+    border: 1px solid #e2e8f0 !important;
 
     border-radius: 14px !important;
+
+    padding: 0.8rem !important;
 }
 
 
@@ -459,23 +479,28 @@ section[data-testid="stSidebar"] .block-container {
 }
 
 
-/* =========================================================
+/* =======================================================
    ALERTS
-   ========================================================= */
+   ======================================================= */
+
+[data-testid="stAlert"] {
+    border-radius: 12px !important;
+}
+
 
 [data-testid="stAlert"] * {
     color: #0f172a !important;
 }
 
 
-/* =========================================================
+/* =======================================================
    CHAT
-   ========================================================= */
+   ======================================================= */
 
 [data-testid="stChatMessage"] {
     border-radius: 16px !important;
 
-    margin-bottom: .65rem !important;
+    margin-bottom: 0.65rem !important;
 }
 
 
@@ -487,9 +512,7 @@ section[data-testid="stSidebar"] .block-container {
 [data-testid="stChatInput"] {
     background: #ffffff !important;
 
-    border-top: 1px solid var(--docai-border) !important;
-
-    padding: .65rem .75rem !important;
+    border-top: 1px solid #e2e8f0 !important;
 }
 
 
@@ -516,14 +539,14 @@ section[data-testid="stSidebar"] .block-container {
 }
 
 
-/* =========================================================
+/* =======================================================
    EXPANDERS
-   ========================================================= */
+   ======================================================= */
 
 [data-testid="stExpander"] {
     background: #ffffff !important;
 
-    border: 1px solid var(--docai-border) !important;
+    border: 1px solid #e2e8f0 !important;
 
     border-radius: 14px !important;
 }
@@ -535,48 +558,49 @@ section[data-testid="stSidebar"] .block-container {
 }
 
 
-/* =========================================================
-   DIVIDERS
-   ========================================================= */
+/* =======================================================
+   DIVIDER
+   ======================================================= */
 
 hr {
-    border-color: var(--docai-border) !important;
+    border-color: #e2e8f0 !important;
 }
 
 
-/* =========================================================
+/* =======================================================
    FOOTER
-   ========================================================= */
+   ======================================================= */
 
 .docai-footer {
+    color: #94a3b8 !important;
+
     text-align: center;
 
-    color: #94a3b8 !important;
+    font-size: 0.78rem;
 
-    font-size: .78rem;
+    padding-top: 2rem;
 
-    padding: 2rem 0 0;
+    padding-bottom: 1rem;
 }
 
 
-.docai-footer * {
-    color: #94a3b8 !important;
-}
-
-
-/* =========================================================
+/* =======================================================
    MOBILE
-   ========================================================= */
+   ======================================================= */
 
 @media (max-width: 768px) {
 
     .block-container {
-        padding: 1rem .75rem 5.5rem !important;
+        padding-top: 1rem !important;
+
+        padding-left: 0.75rem !important;
+
+        padding-right: 0.75rem !important;
     }
 
 
     .docai-hero {
-        padding: 1.35rem 1.15rem;
+        padding: 1.4rem 1.15rem;
 
         border-radius: 18px;
     }
@@ -588,7 +612,7 @@ hr {
 
 
     .docai-hero p {
-        font-size: .92rem;
+        font-size: 0.9rem;
     }
 
 
@@ -604,25 +628,10 @@ hr {
     }
 
 
-    .docai-brand {
-        margin-bottom: 1rem;
-    }
-
-
     section[data-testid="stSidebar"] .block-container {
-        padding: 1rem .8rem 1.5rem !important;
-    }
+        padding-left: 0.8rem !important;
 
-
-    [data-testid="stMetric"] {
-        margin-bottom: .5rem;
-    }
-
-
-    [data-testid="stChatInput"] {
-        padding-left: .35rem !important;
-
-        padding-right: .35rem !important;
+        padding-right: 0.8rem !important;
     }
 
 }
@@ -634,145 +643,122 @@ hr {
 
 
 # =========================================================
-# UI HELPERS
+# HTML UI HELPERS
 # =========================================================
 
 def render_brand():
-    st.markdown(
+    st.html(
         """
-        <div class="docai-brand">
+<div class="docai-brand">
+    <div class="docai-logo">📘</div>
 
-            <div class="docai-logo">
-                📘
-            </div>
-
-            <div>
-
-                <div class="docai-brand-title">
-                    DocAI
-                </div>
-
-                <div class="docai-brand-subtitle">
-                    Enterprise Document Intelligence
-                </div>
-
-            </div>
-
+    <div>
+        <div class="docai-brand-title">
+            DocAI
         </div>
-        """,
-        unsafe_allow_html=True,
+
+        <div class="docai-brand-subtitle">
+            Enterprise Document Intelligence
+        </div>
+    </div>
+</div>
+"""
     )
 
 
 def render_hero():
-    st.markdown(
+    st.html(
         """
-        <div class="docai-hero">
+<div class="docai-hero">
 
-            <div class="docai-eyebrow">
-                AI-powered document intelligence
-            </div>
+    <div class="docai-eyebrow">
+        AI-powered document intelligence
+    </div>
 
-            <h1>
-                Ask your documents.<br>
-                Get grounded answers.
-            </h1>
+    <h1>
+        Ask your documents.<br>
+        Get grounded answers.
+    </h1>
 
-            <p>
-                Upload business documents or connect a public
-                Google Drive file or folder. DocAI retrieves
-                the most relevant passages and generates answers
-                grounded only in your indexed knowledge base.
-            </p>
+    <p>
+        Upload business documents or connect a public
+        Google Drive file or folder. DocAI retrieves
+        the most relevant passages and generates answers
+        grounded only in your indexed knowledge base.
+    </p>
 
+</div>
+
+
+<div class="feature-grid">
+
+    <div class="feature-card">
+
+        <div class="feature-icon">
+            📄
         </div>
 
-
-        <div class="feature-grid">
-
-            <div class="feature-card">
-
-                <div class="feature-icon">
-                    📄
-                </div>
-
-                <div class="feature-title">
-                    Multi-document
-                </div>
-
-                <div class="feature-text">
-                    Work with PDF, DOCX, TXT and Markdown
-                    files in one knowledge base.
-                </div>
-
-            </div>
-
-
-            <div class="feature-card">
-
-                <div class="feature-icon">
-                    🔎
-                </div>
-
-                <div class="feature-title">
-                    Grounded retrieval
-                </div>
-
-                <div class="feature-text">
-                    Semantic search finds relevant document
-                    passages before every answer.
-                </div>
-
-            </div>
-
-
-            <div class="feature-card">
-
-                <div class="feature-icon">
-                    ☁️
-                </div>
-
-                <div class="feature-title">
-                    Google Drive
-                </div>
-
-                <div class="feature-text">
-                    Load public/shared Drive files or folders
-                    without manual downloading.
-                </div>
-
-            </div>
-
+        <div class="feature-title">
+            Multi-document
         </div>
-        """,
-        unsafe_allow_html=True,
+
+        <div class="feature-text">
+            Work with PDF, DOCX, TXT and Markdown
+            files in one knowledge base.
+        </div>
+
+    </div>
+
+
+    <div class="feature-card">
+
+        <div class="feature-icon">
+            🔎
+        </div>
+
+        <div class="feature-title">
+            Grounded retrieval
+        </div>
+
+        <div class="feature-text">
+            Semantic search finds relevant document
+            passages before every answer.
+        </div>
+
+    </div>
+
+
+    <div class="feature-card">
+
+        <div class="feature-icon">
+            ☁️
+        </div>
+
+        <div class="feature-title">
+            Google Drive
+        </div>
+
+        <div class="feature-text">
+            Load public/shared Drive files or folders
+            without manual downloading.
+        </div>
+
+    </div>
+
+</div>
+"""
     )
 
 
 def render_footer():
-    st.markdown(
+    st.html(
         """
-        <div class="docai-footer">
-            DocAI · Enterprise Document Intelligence ·
-            Answers are grounded in your indexed documents.
-        </div>
-        """,
-        unsafe_allow_html=True,
+<div class="docai-footer">
+    DocAI · Enterprise Document Intelligence ·
+    Answers are grounded in your indexed documents.
+</div>
+"""
     )
-
-
-# =========================================================
-# CACHED MODELS / CLIENTS
-# =========================================================
-
-@st.cache_resource
-def load_embedding_model():
-    return SentenceTransformer(EMBEDDING_MODEL_NAME)
-
-
-@st.cache_resource
-def load_groq_client(api_key: str):
-    return Groq(api_key=api_key)
 
 
 # =========================================================
@@ -800,10 +786,32 @@ initialize_session_state()
 
 
 # =========================================================
-# DOCUMENT EXTRACTION
+# CACHED MODELS
 # =========================================================
 
-def extract_pdf_text(file_bytes: bytes) -> str:
+@st.cache_resource
+def load_embedding_model():
+
+    return SentenceTransformer(
+        EMBEDDING_MODEL_NAME
+    )
+
+
+@st.cache_resource
+def load_groq_client(api_key: str):
+
+    return Groq(
+        api_key=api_key
+    )
+
+
+# =========================================================
+# PDF EXTRACTION
+# =========================================================
+
+def extract_pdf_text(
+    file_bytes: bytes
+) -> str:
 
     reader = PdfReader(
         BytesIO(file_bytes)
@@ -816,32 +824,59 @@ def extract_pdf_text(file_bytes: bytes) -> str:
         text = page.extract_text()
 
         if text:
-            pages.append(text)
 
-    return "\n\n".join(pages).strip()
+            pages.append(
+                text
+            )
+
+    return "\n\n".join(
+        pages
+    ).strip()
 
 
-def extract_docx_text(file_bytes: bytes) -> str:
+# =========================================================
+# DOCX EXTRACTION
+# =========================================================
+
+def extract_docx_text(
+    file_bytes: bytes
+) -> str:
 
     document = Document(
         BytesIO(file_bytes)
     )
 
-    paragraphs = [
-        paragraph.text
-        for paragraph in document.paragraphs
-        if paragraph.text.strip()
-    ]
+    paragraphs = []
 
-    return "\n".join(paragraphs).strip()
+    for paragraph in document.paragraphs:
 
+        text = paragraph.text.strip()
+
+        if text:
+
+            paragraphs.append(
+                text
+            )
+
+    return "\n".join(
+        paragraphs
+    ).strip()
+
+
+# =========================================================
+# GENERIC TEXT EXTRACTION
+# =========================================================
 
 def extract_text(
     file_bytes: bytes,
     file_name: str,
 ) -> str:
 
-    extension = file_name.lower().split(".")[-1]
+    extension = (
+        file_name
+        .lower()
+        .split(".")[-1]
+    )
 
     try:
 
@@ -851,27 +886,33 @@ def extract_text(
                 file_bytes
             )
 
-        if extension == "docx":
+        elif extension == "docx":
 
             return extract_docx_text(
                 file_bytes
             )
 
-        if extension in {"txt", "md"}:
+        elif extension in {
+            "txt",
+            "md",
+        }:
 
             return file_bytes.decode(
                 "utf-8",
                 errors="replace",
             ).strip()
 
-        raise ValueError(
-            f"Unsupported file type: .{extension}"
-        )
+        else:
+
+            raise ValueError(
+                f"Unsupported file type: .{extension}"
+            )
 
     except Exception as exc:
 
         raise RuntimeError(
-            f"Could not extract text from '{file_name}': {exc}"
+            f"Could not extract text from "
+            f"'{file_name}': {exc}"
         ) from exc
 
 
@@ -886,7 +927,9 @@ def create_chunks(
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
+
         chunk_overlap=CHUNK_OVERLAP,
+
         separators=[
             "\n\n",
             "\n",
@@ -913,7 +956,9 @@ def create_chunks(
             chunks.append(
                 {
                     "text": cleaned_text,
+
                     "source_file": source_file,
+
                     "chunk_id": chunk_id,
                 }
             )
@@ -922,13 +967,13 @@ def create_chunks(
 
 
 # =========================================================
-# FAISS INDEX
+# BUILD FAISS INDEX
 # =========================================================
 
 def build_faiss_index(
     chunks: List[Dict],
     embedding_model,
-) -> faiss.Index:
+):
 
     if not chunks:
 
@@ -943,8 +988,11 @@ def build_faiss_index(
 
     embeddings = embedding_model.encode(
         texts,
+
         convert_to_numpy=True,
+
         normalize_embeddings=True,
+
         show_progress_bar=False,
     )
 
@@ -954,9 +1002,6 @@ def build_faiss_index(
     )
 
     dimension = embeddings.shape[1]
-
-    # Inner product on normalized embeddings
-    # is cosine similarity.
 
     index = faiss.IndexFlatIP(
         dimension
@@ -970,16 +1015,16 @@ def build_faiss_index(
 
 
 # =========================================================
-# RETRIEVAL
+# RETRIEVE CHUNKS
 # =========================================================
 
 def retrieve_chunks(
     query: str,
-    index: faiss.Index,
+    index,
     chunks: List[Dict],
     embedding_model,
     top_k: int = TOP_K,
-) -> List[Tuple[Dict, float]]:
+):
 
     if (
         index is None
@@ -990,8 +1035,11 @@ def retrieve_chunks(
 
     query_embedding = embedding_model.encode(
         [query],
+
         convert_to_numpy=True,
+
         normalize_embeddings=True,
+
         show_progress_bar=False,
     )
 
@@ -1035,7 +1083,7 @@ def retrieve_chunks(
 
 def build_grounded_prompt(
     query: str,
-    retrieved_chunks: List[Tuple[Dict, float]],
+    retrieved_chunks,
 ) -> str:
 
     context_parts = []
@@ -1069,33 +1117,45 @@ You are an enterprise document question-answering assistant.
 Answer the user's question using ONLY the context snippets supplied below.
 
 STRICT GROUNDING RULES:
+
 1. Use ONLY information contained in the supplied context snippets.
+
 2. Do NOT use your pretrained knowledge.
+
 3. Do NOT use outside information.
+
 4. Do NOT make assumptions.
+
 5. Do NOT guess.
+
 6. If the answer cannot be found in the context, respond EXACTLY:
+
 Information not found in the uploaded documents.
+
 7. You may combine information from multiple snippets when supported.
+
 8. Keep the answer clear and concise.
+
 9. Do not mention information that is not supported by the context.
 
 CONTEXT:
+
 {context}
 
 USER QUESTION:
+
 {query}
 """
 
 
 # =========================================================
-# GROQ ANSWER GENERATION
+# GROQ GENERATION
 # =========================================================
 
 def generate_answer(
     query: str,
-    retrieved_chunks: List[Tuple[Dict, float]],
-    groq_client: Groq,
+    retrieved_chunks,
+    groq_client,
 ) -> str:
 
     if not retrieved_chunks:
@@ -1106,24 +1166,29 @@ def generate_answer(
 
     prompt = build_grounded_prompt(
         query,
+
         retrieved_chunks,
     )
 
     response = groq_client.chat.completions.create(
+
         model=GROQ_MODEL_NAME,
 
         messages=[
             {
                 "role": "system",
+
                 "content": (
-                    "You are a strictly grounded document "
-                    "question-answering system. Never use "
-                    "knowledge outside the supplied context."
+                    "You are a strictly grounded "
+                    "document question-answering system. "
+                    "Never use knowledge outside the "
+                    "supplied context."
                 ),
             },
 
             {
                 "role": "user",
+
                 "content": prompt,
             },
         ],
@@ -1135,37 +1200,41 @@ def generate_answer(
 
     answer = response.choices[0].message.content
 
-    return (
-        answer.strip()
-        if answer and answer.strip()
-        else "Information not found in the uploaded documents."
-    )
+    if not answer:
+
+        return (
+            "Information not found in the uploaded documents."
+        )
+
+    answer = answer.strip()
+
+    if not answer:
+
+        return (
+            "Information not found in the uploaded documents."
+        )
+
+    return answer
 
 
 # =========================================================
-# DOCUMENT PROCESSING
+# PROCESS DOCUMENT FILES
 # =========================================================
 
 def process_file_items(
     file_items,
 ) -> None:
 
-    """
-    Process local or Google Drive files represented as:
-
-        (file_name, file_bytes)
-    """
-
     all_chunks = []
 
     documents = []
 
-    progress = st.progress(
-        0
-    )
-
     total_files = len(
         file_items
+    )
+
+    progress = st.progress(
+        0
     )
 
     for file_number, (
@@ -1188,26 +1257,30 @@ def process_file_items(
 
             text = extract_text(
                 file_bytes,
+
                 file_name,
             )
 
             if not text.strip():
 
                 st.warning(
-                    f"No readable text was found in '{file_name}'."
+                    f"No readable text was found "
+                    f"in '{file_name}'."
                 )
 
                 continue
 
             chunks = create_chunks(
                 text,
+
                 file_name,
             )
 
             if not chunks:
 
                 st.warning(
-                    f"No chunks could be created from '{file_name}'."
+                    f"No chunks could be created "
+                    f"from '{file_name}'."
                 )
 
                 continue
@@ -1215,6 +1288,7 @@ def process_file_items(
             documents.append(
                 {
                     "file_name": file_name,
+
                     "text": text,
                 }
             )
@@ -1226,12 +1300,17 @@ def process_file_items(
         except Exception as exc:
 
             st.error(
-                f"Error processing '{file_name}': {exc}"
+                f"Error processing "
+                f"'{file_name}': {exc}"
             )
 
-        progress.progress(
-            file_number / total_files
-        )
+        finally:
+
+            if total_files:
+
+                progress.progress(
+                    file_number / total_files
+                )
 
     progress.empty()
 
@@ -1250,11 +1329,13 @@ def process_file_items(
         )
 
         with st.spinner(
-            "Generating embeddings and building FAISS index..."
+            "Generating embeddings and "
+            "building FAISS index..."
         ):
 
             index = build_faiss_index(
                 all_chunks,
+
                 embedding_model,
             )
 
@@ -1272,14 +1353,16 @@ def process_file_items(
 
         st.session_state.indexed_file_names = [
             document["file_name"]
+
             for document in documents
         ]
 
         st.session_state.chat_history = []
 
         st.success(
-            f"Indexed {len(documents)} document(s) "
-            f"into {len(all_chunks)} chunks."
+            f"Indexed {len(documents)} "
+            f"document(s) into "
+            f"{len(all_chunks)} chunks."
         )
 
     except Exception as exc:
@@ -1289,18 +1372,25 @@ def process_file_items(
         )
 
 
+# =========================================================
+# LOCAL UPLOAD PROCESSING
+# =========================================================
+
 def process_uploaded_files(
     uploaded_files,
 ) -> None:
 
-    file_items = [
-        (
-            uploaded_file.name,
-            uploaded_file.getvalue(),
-        )
+    file_items = []
 
-        for uploaded_file in uploaded_files
-    ]
+    for uploaded_file in uploaded_files:
+
+        file_items.append(
+            (
+                uploaded_file.name,
+
+                uploaded_file.getvalue(),
+            )
+        )
 
     process_file_items(
         file_items
@@ -1315,28 +1405,13 @@ def download_google_drive_files(
     drive_url: str,
 ):
 
-    """
-    Download a public/shared Google Drive file
-    or folder into a temporary directory.
-
-    Returns:
-
-        [
-            (display_name, bytes),
-            ...
-        ]
-
-    The Drive item must be shared as:
-
-        Anyone with the link -> Viewer
-    """
-
     drive_url = drive_url.strip()
 
     if not drive_url:
 
         raise ValueError(
-            "Please paste a Google Drive file or folder link."
+            "Please paste a Google Drive "
+            "file or folder link."
         )
 
     if (
@@ -1366,8 +1441,11 @@ def download_google_drive_files(
                 folder_paths = (
                     gdown.download_folder(
                         url=drive_url,
+
                         output=temp_dir,
+
                         quiet=True,
+
                         use_cookies=False,
                     )
                 )
@@ -1383,7 +1461,9 @@ def download_google_drive_files(
                 downloaded_path = (
                     gdown.download(
                         url=drive_url,
+
                         output=temp_dir,
+
                         quiet=True,
                     )
                 )
@@ -1428,6 +1508,7 @@ def download_google_drive_files(
                 file_items.append(
                     (
                         path.name,
+
                         path.read_bytes(),
                     )
                 )
@@ -1435,8 +1516,8 @@ def download_google_drive_files(
             except Exception as exc:
 
                 st.warning(
-                    f"Could not read '{path.name}' "
-                    f"from the downloaded Drive data: {exc}"
+                    f"Could not read "
+                    f"'{path.name}': {exc}"
                 )
 
         if not file_items:
@@ -1449,14 +1530,11 @@ def download_google_drive_files(
 
         return file_items
 
-    except Exception:
-
-        raise
-
     finally:
 
         shutil.rmtree(
             temp_dir,
+
             ignore_errors=True,
         )
 
@@ -1499,15 +1577,17 @@ with st.sidebar:
     )
 
 
-    if uploaded_files and st.button(
-        "🔄 Process Uploaded Documents",
+    if uploaded_files:
 
-        use_container_width=True,
-    ):
+        if st.button(
+            "🔄 Process Uploaded Documents",
 
-        process_uploaded_files(
-            uploaded_files
-        )
+            use_container_width=True,
+        ):
+
+            process_uploaded_files(
+                uploaded_files
+            )
 
 
     st.divider()
@@ -1524,7 +1604,7 @@ with st.sidebar:
 
     st.caption(
         "Use a public/shared Google Drive file "
-        "or folder. Sharing must be set to "
+        "or folder. Sharing must be "
         "'Anyone with the link → Viewer'."
     )
 
@@ -1567,8 +1647,9 @@ with st.sidebar:
 
                 st.success(
                     f"Downloaded "
-                    f"{len(drive_file_items)} supported "
-                    f"document(s) from Google Drive."
+                    f"{len(drive_file_items)} "
+                    f"supported document(s) "
+                    f"from Google Drive."
                 )
 
                 process_file_items(
@@ -1579,7 +1660,7 @@ with st.sidebar:
 
                 st.error(
                     "Could not load the Google Drive "
-                    f"documents. Details: {exc}"
+                    f"documents.\n\n{exc}"
                 )
 
 
@@ -1587,7 +1668,7 @@ with st.sidebar:
 
 
     # -----------------------------------------------------
-    # KNOWLEDGE BASE STATUS
+    # STATUS
     # -----------------------------------------------------
 
     st.markdown(
@@ -1600,6 +1681,7 @@ with st.sidebar:
 
         st.metric(
             "Documents",
+
             len(
                 st.session_state.documents
             ),
@@ -1607,6 +1689,7 @@ with st.sidebar:
 
         st.metric(
             "Text Chunks",
+
             len(
                 st.session_state.chunks
             ),
@@ -1635,7 +1718,7 @@ with st.sidebar:
 
 
     # -----------------------------------------------------
-    # CLEAR KNOWLEDGE BASE
+    # CLEAR
     # -----------------------------------------------------
 
     if st.button(
@@ -1665,7 +1748,7 @@ render_hero()
 
 
 # =========================================================
-# GROQ API
+# GROQ API KEY
 # =========================================================
 
 groq_api_key = None
@@ -1684,12 +1767,17 @@ except Exception:
 if not groq_api_key:
 
     st.warning(
-        "Groq API key is missing. Add "
-        "GROQ_API_KEY to .streamlit/secrets.toml."
+        "Groq API key is missing. "
+        "Add GROQ_API_KEY to your "
+        "Streamlit secrets."
     )
 
     st.stop()
 
+
+# =========================================================
+# GROQ CLIENT
+# =========================================================
 
 try:
 
@@ -1714,32 +1802,46 @@ for message in (
     st.session_state.chat_history
 ):
 
+    role = message.get(
+        "role",
+        "assistant",
+    )
+
+    content = message.get(
+        "content",
+        "",
+    )
+
     with st.chat_message(
-        message["role"]
+        role
     ):
 
         st.markdown(
-            message["content"]
+            content
         )
 
+        sources = message.get(
+            "sources",
+            [],
+        )
 
         if (
-            message["role"] == "assistant"
-            and message.get("sources")
+            role == "assistant"
+            and sources
         ):
 
             with st.expander(
                 "📖 Sources Used"
             ):
 
-                for source in (
-                    message["sources"]
-                ):
+                for source in sources:
 
                     st.markdown(
                         f"""
-**Source:** `{source["source_file"]}`  
-**Chunk ID:** `{source["chunk_id"]}`  
+**Source:** `{source["source_file"]}`
+
+**Chunk ID:** `{source["chunk_id"]}`
+
 **Similarity:** `{source["score"]:.4f}`
 
 > {source["text"]}
@@ -1748,7 +1850,7 @@ for message in (
 
 
 # =========================================================
-# CHAT
+# INITIAL STATE MESSAGE
 # =========================================================
 
 if st.session_state.index is None:
@@ -1758,165 +1860,69 @@ if st.session_state.index is None:
         "from Google Drive before asking a question."
     )
 
-else:
 
-    query = st.chat_input(
-        "Ask a question about your documents..."
-    )
+# =========================================================
+# CHAT INPUT
+# =========================================================
 
-
-    if query:
-
-        query = query.strip()
+query = st.chat_input(
+    "Ask a question about your documents..."
+)
 
 
-        if not query:
+if query:
 
-            st.warning(
-                "Please enter a question."
-            )
+    query = query.strip()
 
-            st.stop()
+    if not query:
 
+        st.warning(
+            "Please enter a question."
+        )
 
-        # -------------------------------------------------
-        # USER MESSAGE
-        # -------------------------------------------------
-
-        with st.chat_message(
-            "user"
-        ):
-
-            st.markdown(
-                query
-            )
+        st.stop()
 
 
-        st.session_state.chat_history.append(
-            {
-                "role": "user",
-                "content": query,
-            }
+    # -----------------------------------------------------
+    # USER MESSAGE
+    # -----------------------------------------------------
+
+    with st.chat_message(
+        "user"
+    ):
+
+        st.markdown(
+            query
         )
 
 
-        # -------------------------------------------------
-        # RETRIEVAL
-        # -------------------------------------------------
+    st.session_state.chat_history.append(
+        {
+            "role": "user",
 
-        try:
-
-            embedding_model = (
-                load_embedding_model()
-            )
+            "content": query,
+        }
+    )
 
 
-            with st.spinner(
-                "Searching the knowledge base..."
-            ):
+    # -----------------------------------------------------
+    # MAKE SURE KNOWLEDGE BASE EXISTS
+    # -----------------------------------------------------
 
-                retrieved_chunks = (
-                    retrieve_chunks(
-                        query=query,
+    if st.session_state.index is None:
 
-                        index=(
-                            st.session_state.index
-                        ),
-
-                        chunks=(
-                            st.session_state.chunks
-                        ),
-
-                        embedding_model=(
-                            embedding_model
-                        ),
-
-                        top_k=TOP_K,
-                    )
-                )
-
-
-        except Exception as exc:
-
-            st.error(
-                f"Error during vector search: {exc}"
-            )
-
-            st.stop()
-
-
-        # -------------------------------------------------
-        # ANSWER
-        # -------------------------------------------------
+        answer = (
+            "Please upload or load documents "
+            "before asking a question."
+        )
 
         with st.chat_message(
             "assistant"
         ):
 
-            try:
-
-                with st.spinner(
-                    "Generating grounded answer..."
-                ):
-
-                    answer = generate_answer(
-                        query=query,
-
-                        retrieved_chunks=(
-                            retrieved_chunks
-                        ),
-
-                        groq_client=(
-                            groq_client
-                        ),
-                    )
-
-
-                st.markdown(
-                    answer
-                )
-
-
-                # -----------------------------------------
-                # SOURCES
-                # -----------------------------------------
-
-                if retrieved_chunks:
-
-                    with st.expander(
-                        "📖 Sources Used"
-                    ):
-
-                        for chunk, score in (
-                            retrieved_chunks
-                        ):
-
-                            st.markdown(
-                                f"""
-**Source:** `{chunk["source_file"]}`  
-**Chunk ID:** `{chunk["chunk_id"]}`  
-**Similarity:** `{score:.4f}`
-
-> {chunk["text"]}
-"""
-                            )
-
-
-            except Exception as exc:
-
-                answer = (
-                    "An error occurred while "
-                    f"generating the answer: {exc}"
-                )
-
-                st.error(
-                    answer
-                )
-
-
-        # -------------------------------------------------
-        # SAVE ASSISTANT MESSAGE
-        # -------------------------------------------------
+            st.warning(
+                answer
+            )
 
         st.session_state.chat_history.append(
             {
@@ -1924,17 +1930,175 @@ else:
 
                 "content": answer,
 
-                "sources": [
-                    {
-                        **chunk,
-                        "score": score,
-                    }
-
-                    for chunk, score
-                    in retrieved_chunks
-                ],
+                "sources": [],
             }
         )
+
+        st.stop()
+
+
+    # -----------------------------------------------------
+    # EMBEDDING MODEL
+    # -----------------------------------------------------
+
+    try:
+
+        embedding_model = (
+            load_embedding_model()
+        )
+
+    except Exception as exc:
+
+        st.error(
+            f"Could not load embedding model: {exc}"
+        )
+
+        st.stop()
+
+
+    # -----------------------------------------------------
+    # RETRIEVAL
+    # -----------------------------------------------------
+
+    try:
+
+        with st.spinner(
+            "Searching the knowledge base..."
+        ):
+
+            retrieved_chunks = (
+                retrieve_chunks(
+                    query=query,
+
+                    index=(
+                        st.session_state.index
+                    ),
+
+                    chunks=(
+                        st.session_state.chunks
+                    ),
+
+                    embedding_model=(
+                        embedding_model
+                    ),
+
+                    top_k=TOP_K,
+                )
+            )
+
+    except Exception as exc:
+
+        st.error(
+            f"Error during vector search: {exc}"
+        )
+
+        st.stop()
+
+
+    # -----------------------------------------------------
+    # GENERATE ANSWER
+    # -----------------------------------------------------
+
+    with st.chat_message(
+        "assistant"
+    ):
+
+        try:
+
+            with st.spinner(
+                "Generating grounded answer..."
+            ):
+
+                answer = generate_answer(
+                    query=query,
+
+                    retrieved_chunks=(
+                        retrieved_chunks
+                    ),
+
+                    groq_client=(
+                        groq_client
+                    ),
+                )
+
+
+            st.markdown(
+                answer
+            )
+
+
+            # ---------------------------------------------
+            # SOURCES
+            # ---------------------------------------------
+
+            if retrieved_chunks:
+
+                with st.expander(
+                    "📖 Sources Used"
+                ):
+
+                    for (
+                        chunk,
+                        score,
+                    ) in retrieved_chunks:
+
+                        st.markdown(
+                            f"""
+**Source:** `{chunk["source_file"]}`
+
+**Chunk ID:** `{chunk["chunk_id"]}`
+
+**Similarity:** `{score:.4f}`
+
+> {chunk["text"]}
+"""
+                        )
+
+
+        except Exception as exc:
+
+            answer = (
+                "An error occurred while "
+                f"generating the answer: {exc}"
+            )
+
+            st.error(
+                answer
+            )
+
+
+    # -----------------------------------------------------
+    # SAVE ANSWER
+    # -----------------------------------------------------
+
+    st.session_state.chat_history.append(
+        {
+            "role": "assistant",
+
+            "content": answer,
+
+            "sources": [
+                {
+                    "source_file": chunk[
+                        "source_file"
+                    ],
+
+                    "chunk_id": chunk[
+                        "chunk_id"
+                    ],
+
+                    "text": chunk[
+                        "text"
+                    ],
+
+                    "score": score,
+                }
+
+                for chunk, score
+                in retrieved_chunks
+            ],
+        }
+    )
 
 
 # =========================================================
