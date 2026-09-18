@@ -14,7 +14,7 @@ from groq import Groq
 
 APP_TITLE = "Enterprise Multi-Document RAG Assistant"
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
-GROQ_MODEL_NAME = "llama-3.3-70b-versatile"
+GROQ_MODEL_NAME = "openai/gpt-oss-120b"
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 150
 TOP_K = 5
