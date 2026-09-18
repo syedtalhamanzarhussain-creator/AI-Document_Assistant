@@ -16,7 +16,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from groq import Groq
 
 
-APP_TITLE = "Enterprise Multi-Document RAG Assistant"
+APP_TITLE = "DocAI — Enterprise Document Intelligence"
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 GROQ_MODEL_NAME = "openai/gpt-oss-120b"
 CHUNK_SIZE = 800
@@ -25,7 +25,261 @@ TOP_K = 5
 SUPPORTED_TYPES = ["pdf", "docx", "txt", "md"]
 
 
-st.set_page_config(page_title=APP_TITLE, page_icon="📚", layout="wide")
+st.set_page_config(
+    page_title=APP_TITLE,
+    page_icon="📘",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+
+# ---------- Professional responsive UI ----------
+st.markdown("""
+<style>
+    /* Global */
+    .stApp {
+        background: #f7f9fc;
+    }
+    [data-testid="stHeader"] {
+        background: rgba(247,249,252,0.92);
+    }
+    .block-container {
+        max-width: 1180px;
+        padding: 2rem 1.25rem 6rem 1.25rem;
+    }
+
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background: #ffffff;
+        border-right: 1px solid #e8edf3;
+    }
+    section[data-testid="stSidebar"] .block-container {
+        padding: 1.25rem 1rem 2rem 1rem;
+    }
+
+    /* Brand */
+    .docai-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 1.5rem 0;
+    }
+    .docai-logo {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #111827, #334155);
+        color: white;
+        font-size: 24px;
+        box-shadow: 0 8px 24px rgba(15,23,42,.14);
+        flex: 0 0 auto;
+    }
+    .docai-brand-title {
+        font-size: 1.08rem;
+        font-weight: 800;
+        line-height: 1.1;
+        color: #111827;
+        margin: 0;
+    }
+    .docai-brand-subtitle {
+        font-size: .76rem;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    /* Hero */
+    .docai-hero {
+        padding: 2.2rem 2.2rem 2rem 2.2rem;
+        border: 1px solid #e5eaf0;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+        box-shadow: 0 16px 50px rgba(15,23,42,.06);
+        margin-bottom: 1.25rem;
+    }
+    .docai-eyebrow {
+        display: inline-block;
+        font-size: .76rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #475569;
+        margin-bottom: .7rem;
+    }
+    .docai-hero h1 {
+        font-size: clamp(2rem, 5vw, 3.35rem);
+        line-height: 1.05;
+        letter-spacing: -.045em;
+        color: #0f172a;
+        margin: 0 0 .85rem 0;
+    }
+    .docai-hero p {
+        max-width: 760px;
+        color: #475569;
+        font-size: 1.02rem;
+        line-height: 1.65;
+        margin: 0;
+    }
+
+    /* Feature cards */
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 1.1rem 0 1.5rem 0;
+    }
+    .feature-card {
+        background: #fff;
+        border: 1px solid #e5eaf0;
+        border-radius: 18px;
+        padding: 1.1rem;
+        min-height: 120px;
+    }
+    .feature-icon {
+        font-size: 1.35rem;
+        margin-bottom: .55rem;
+    }
+    .feature-title {
+        font-weight: 750;
+        color: #111827;
+        margin-bottom: .25rem;
+    }
+    .feature-text {
+        color: #64748b;
+        font-size: .86rem;
+        line-height: 1.45;
+    }
+
+    /* Section labels */
+    .section-label {
+        font-size: .78rem;
+        font-weight: 800;
+        letter-spacing: .07em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin: 1.2rem 0 .55rem 0;
+    }
+
+    /* Buttons */
+    .stButton > button {
+        border-radius: 11px;
+        min-height: 44px;
+        font-weight: 700;
+        border: 1px solid #dbe2ea;
+    }
+    .stButton > button:hover {
+        border-color: #94a3b8;
+    }
+
+    /* Chat */
+    [data-testid="stChatMessage"] {
+        border-radius: 16px;
+        margin-bottom: .65rem;
+    }
+    [data-testid="stChatInput"] {
+        padding-bottom: .5rem;
+    }
+
+    /* Metrics */
+    [data-testid="stMetric"] {
+        background: #fff;
+        border: 1px solid #e5eaf0;
+        padding: .8rem;
+        border-radius: 14px;
+    }
+
+    /* Footer */
+    .docai-footer {
+        text-align: center;
+        color: #94a3b8;
+        font-size: .78rem;
+        padding: 2rem 0 0 0;
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+        .block-container {
+            padding: 1rem .75rem 5rem .75rem;
+        }
+        .docai-hero {
+            padding: 1.35rem 1.15rem;
+            border-radius: 18px;
+        }
+        .docai-hero h1 {
+            font-size: 2rem;
+        }
+        .docai-hero p {
+            font-size: .94rem;
+        }
+        .feature-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .feature-card {
+            min-height: auto;
+        }
+        .docai-brand {
+            margin-bottom: 1rem;
+        }
+        section[data-testid="stSidebar"] .block-container {
+            padding: 1rem .8rem 1.5rem .8rem;
+        }
+        [data-testid="stMetric"] {
+            margin-bottom: .5rem;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+def render_brand():
+    st.markdown("""
+    <div class="docai-brand">
+        <div class="docai-logo">📘</div>
+        <div>
+            <div class="docai-brand-title">DocAI</div>
+            <div class="docai-brand-subtitle">Enterprise Document Intelligence</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_hero():
+    st.markdown("""
+    <div class="docai-hero">
+        <div class="docai-eyebrow">AI-powered document intelligence</div>
+        <h1>Ask your documents.<br>Get grounded answers.</h1>
+        <p>
+            Upload business documents or connect a public Google Drive file or folder.
+            DocAI retrieves the most relevant passages and generates answers grounded
+            only in your indexed knowledge base.
+        </p>
+    </div>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="feature-icon">📄</div>
+            <div class="feature-title">Multi-document</div>
+            <div class="feature-text">Work with PDF, DOCX, TXT and Markdown files in one knowledge base.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔎</div>
+            <div class="feature-title">Grounded retrieval</div>
+            <div class="feature-text">Semantic search finds relevant document passages before every answer.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">☁️</div>
+            <div class="feature-title">Google Drive</div>
+            <div class="feature-text">Load public/shared Drive files or folders without manual downloading.</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_footer():
+    st.markdown(
+        '<div class="docai-footer">DocAI · Enterprise Document Intelligence · '
+        'Answers are grounded in your indexed documents.</div>',
+        unsafe_allow_html=True
+    )
 
 
 @st.cache_resource
@@ -413,11 +667,9 @@ def download_google_drive_files(drive_url: str):
 
 
 with st.sidebar:
-    st.header("📚 Document Knowledge Base")
-    st.caption(
-        "Upload documents or load public/shared Google Drive documents "
-        "to create a temporary session-based RAG knowledge base."
-    )
+    render_brand()
+    st.markdown('<div class="section-label">Knowledge base</div>', unsafe_allow_html=True)
+    st.caption("Build a private, session-based knowledge base from your documents.")
 
     uploaded_files = st.file_uploader(
         "Upload documents",
@@ -498,11 +750,7 @@ with st.sidebar:
         st.rerun()
 
 
-st.title("📚 Enterprise Multi-Document RAG Assistant")
-st.write(
-    "Ask questions about your uploaded documents. "
-    "Answers are grounded exclusively in retrieved document context."
-)
+render_hero()
 
 groq_api_key = None
 try:
@@ -619,3 +867,5 @@ else:
                 ],
             }
         )
+
+render_footer()
