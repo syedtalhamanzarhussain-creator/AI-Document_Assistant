@@ -755,6 +755,95 @@ pre {
     color: #0f172a;
 }
 
+
+/* =======================================================
+   FILE UPLOADER — CLEAN LIGHT UI
+   ======================================================= */
+
+.st-key-document_uploader {
+    width: 100% !important;
+}
+
+.st-key-document_uploader [data-testid="stFileUploaderDropzone"] {
+    background: #ffffff !important;
+    border: 1px dashed #cbd5e1 !important;
+    border-radius: 16px !important;
+    padding: 10px !important;
+    box-shadow: none !important;
+}
+
+.st-key-document_uploader [data-testid="stFileUploaderDropzone"]:hover {
+    background: #f8fafc !important;
+    border-color: #2563eb !important;
+}
+
+.st-key-document_uploader [data-testid="stFileUploaderFile"] {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    margin: 7px 0 !important;
+    padding: 7px 10px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+}
+
+.st-key-document_uploader [data-testid="stFileUploaderFile"] span,
+.st-key-document_uploader [data-testid="stFileUploaderFile"] p {
+    color: #0f172a !important;
+    opacity: 1 !important;
+}
+
+.st-key-document_uploader [data-testid="stFileUploaderFile"] small {
+    color: #64748b !important;
+    opacity: 1 !important;
+}
+
+.st-key-document_uploader [data-testid="stFileUploaderFile"] svg {
+    color: #334155 !important;
+}
+
+.st-key-document_uploader [data-testid="stFileUploaderFile"] button {
+    background: transparent !important;
+    color: #64748b !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.st-key-document_uploader [data-testid="stFileUploaderFile"] button:hover {
+    background: #f1f5f9 !important;
+    color: #dc2626 !important;
+}
+
+.st-key-document_uploader button {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 9px !important;
+    font-weight: 600 !important;
+}
+
+.st-key-document_uploader button:hover {
+    background: #f8fafc !important;
+    border-color: #2563eb !important;
+    color: #1d4ed8 !important;
+}
+
+.st-key-document_uploader [data-testid="stFileUploaderDropzoneInstructions"] {
+    color: #64748b !important;
+}
+
+.st-key-document_uploader,
+.st-key-document_uploader * {
+    --text-color: #0f172a;
+}
+
+.st-key-document_uploader [data-testid="stFileUploaderDropzone"] * {
+    color: #0f172a;
+}
+
+.st-key-document_uploader [data-testid="stFileUploaderDropzoneInstructions"] * {
+    color: #64748b !important;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -1290,13 +1379,10 @@ def generate_answer(
     )
 
     response = groq_client.chat.completions.create(
-
         model=GROQ_MODEL_NAME,
-
         messages=[
             {
                 "role": "system",
-
                 "content": (
                     "You are a strictly grounded "
                     "document question-answering system. "
@@ -1304,24 +1390,20 @@ def generate_answer(
                     "supplied context."
                 ),
             },
-
             {
                 "role": "user",
-
                 "content": prompt,
             },
         ],
-
-    temperature=0,
-    max_completion_tokens=1200,
-    reasoning_effort="low",
-    include_reasoning=False,
+        temperature=0,
+        max_completion_tokens=1200,
+        reasoning_effort="low",
+        include_reasoning=False,
     )
 
     answer = response.choices[0].message.content
 
     if not answer:
-
         return (
             "Information not found in the uploaded documents."
         )
@@ -1329,7 +1411,6 @@ def generate_answer(
     answer = answer.strip()
 
     if not answer:
-
         return (
             "Information not found in the uploaded documents."
         )
@@ -1683,16 +1764,16 @@ with st.sidebar:
     )
 
 
-   uploaded_files = st.file_uploader(
-    "Upload documents",
-    type=SUPPORTED_TYPES,
-    accept_multiple_files=True,
-    key="document_uploader",
-    help=(
-        "Supported formats: PDF, DOCX, "
-        "TXT and Markdown."
-    ),
-)
+    uploaded_files = st.file_uploader(
+        "Upload documents",
+        type=SUPPORTED_TYPES,
+        accept_multiple_files=True,
+        key="document_uploader",
+        help=(
+            "Supported formats: PDF, DOCX, "
+            "TXT and Markdown."
+        ),
+    )
 
 
     if uploaded_files:
