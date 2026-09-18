@@ -1,8 +1,12 @@
 import os
+import shutil
+import tempfile
 from io import BytesIO
+from pathlib import Path
 from typing import List, Dict, Tuple
 
 import faiss
+import gdown
 import numpy as np
 import streamlit as st
 from docx import Document
@@ -14,7 +18,7 @@ from groq import Groq
 
 APP_TITLE = "Enterprise Multi-Document RAG Assistant"
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
-GROQ_MODEL_NAME = "openai/gpt-oss-120b"
+GROQ_MODEL_NAME = "llama-3.3-70b-versatile"
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 150
 TOP_K = 5
@@ -231,7 +235,7 @@ def generate_answer(
             {"role": "user", "content": prompt},
         ],
         temperature=0,
-        max_completion_tokens=1200,
+        max_tokens=1200,
     )
 
     answer = response.choices[0].message.content
@@ -242,20 +246,17 @@ def generate_answer(
     )
 
 
-def process_uploaded_files(uploaded_files) -> None:
+def process_file_items(file_items) -> None:
+    """Process local files represented as (file_name, file_bytes)."""
     all_chunks = []
     documents = []
     progress = st.progress(0)
-    total_files = len(uploaded_files)
+    total_files = len(file_items)
 
-    for file_number, uploaded_file in enumerate(
-        uploaded_files, start=1
+    for file_number, (file_name, file_bytes) in enumerate(
+        file_items, start=1
     ):
-        file_name = uploaded_file.name
-
         try:
-            file_bytes = uploaded_file.getvalue()
-
             if not file_bytes:
                 st.warning(f"'{file_name}' is empty and was skipped.")
                 continue
@@ -287,7 +288,7 @@ def process_uploaded_files(uploaded_files) -> None:
     progress.empty()
 
     if not all_chunks:
-        st.error("No usable text was found in the uploaded documents.")
+        st.error("No usable text was found in the documents.")
         return
 
     try:
@@ -315,11 +316,107 @@ def process_uploaded_files(uploaded_files) -> None:
         st.error(f"Could not build the vector index: {exc}")
 
 
+def process_uploaded_files(uploaded_files) -> None:
+    file_items = [
+        (uploaded_file.name, uploaded_file.getvalue())
+        for uploaded_file in uploaded_files
+    ]
+    process_file_items(file_items)
+
+
+def download_google_drive_files(drive_url: str):
+    """
+    Download a public/shared Google Drive file or folder into a temporary
+    directory and return a list of (display_name, bytes).
+
+    The Drive item must be shared as:
+    Anyone with the link -> Viewer.
+    """
+    drive_url = drive_url.strip()
+
+    if not drive_url:
+        raise ValueError("Please paste a Google Drive file or folder link.")
+
+    if "drive.google.com" not in drive_url and "docs.google.com" not in drive_url:
+        raise ValueError(
+            "Please provide a valid Google Drive or Google Docs share link."
+        )
+
+    temp_dir = tempfile.mkdtemp(prefix="rag_drive_")
+
+    try:
+        downloaded_paths = []
+
+        with st.spinner("Downloading documents from Google Drive..."):
+            # Folder links are automatically recognized by gdown.
+            if "/folders/" in drive_url:
+                folder_paths = gdown.download_folder(
+                    url=drive_url,
+                    output=temp_dir,
+                    quiet=True,
+                    use_cookies=False,
+                )
+
+                if folder_paths:
+                    downloaded_paths.extend(folder_paths)
+
+            else:
+                # output=temp_dir lets gdown determine the original filename.
+                downloaded_path = gdown.download(
+                    url=drive_url,
+                    output=temp_dir,
+                    quiet=True,
+                )
+
+                if downloaded_path:
+                    downloaded_paths.append(downloaded_path)
+
+        if not downloaded_paths:
+            raise RuntimeError(
+                "Google Drive did not return any downloadable files."
+            )
+
+        file_items = []
+        supported_count = 0
+
+        for raw_path in downloaded_paths:
+            path = Path(raw_path)
+
+            if not path.is_file():
+                continue
+
+            extension = path.suffix.lower().lstrip(".")
+            if extension not in SUPPORTED_TYPES:
+                continue
+
+            try:
+                file_items.append((path.name, path.read_bytes()))
+                supported_count += 1
+            except Exception as exc:
+                st.warning(
+                    f"Could not read '{path.name}' from the downloaded Drive data: {exc}"
+                )
+
+        if not file_items:
+            raise RuntimeError(
+                "No supported documents were found. "
+                "The Drive file/folder must contain PDF, DOCX, TXT, or MD files."
+            )
+
+        return file_items
+
+    except Exception:
+        raise
+    finally:
+        # The files are already in memory, so remove the temporary downloads.
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
 with st.sidebar:
     st.header("📚 Document Knowledge Base")
     st.caption(
-        "Upload documents to create a temporary session-based "
-        "RAG knowledge base."
+        "Upload documents or load public/shared Google Drive documents "
+        "to create a temporary session-based RAG knowledge base."
     )
 
     uploaded_files = st.file_uploader(
@@ -330,10 +427,50 @@ with st.sidebar:
     )
 
     if uploaded_files and st.button(
-        "🔄 Process Documents",
+        "🔄 Process Uploaded Documents",
         use_container_width=True,
     ):
         process_uploaded_files(uploaded_files)
+
+    st.divider()
+
+    st.subheader("☁️ Google Drive")
+    st.caption(
+        "Use a public/shared Google Drive file or folder. "
+        "Set sharing to 'Anyone with the link → Viewer'."
+    )
+
+    drive_url = st.text_input(
+        "Google Drive link",
+        placeholder="https://drive.google.com/drive/folders/...",
+        help=(
+            "Paste a Google Drive file/folder link. "
+            "The link must be accessible to anyone with the link."
+        ),
+    )
+
+    if st.button(
+        "☁️ Load from Google Drive",
+        use_container_width=True,
+    ):
+        if not drive_url.strip():
+            st.warning("Please paste a Google Drive link first.")
+        else:
+            try:
+                drive_file_items = download_google_drive_files(drive_url)
+
+                st.success(
+                    f"Downloaded {len(drive_file_items)} supported "
+                    f"document(s) from Google Drive."
+                )
+
+                process_file_items(drive_file_items)
+
+            except Exception as exc:
+                st.error(
+                    "Could not load the Google Drive documents. "
+                    f"Details: {exc}"
+                )
 
     st.divider()
     st.subheader("Knowledge Base")
@@ -366,7 +503,6 @@ st.write(
     "Ask questions about your uploaded documents. "
     "Answers are grounded exclusively in retrieved document context."
 )
-
 
 groq_api_key = None
 try:
@@ -408,7 +544,8 @@ for message in st.session_state.chat_history:
 
 if st.session_state.index is None:
     st.info(
-        "Upload and process at least one document before asking a question."
+        "Upload/process documents or load documents from Google Drive "
+        "before asking a question."
     )
 else:
     query = st.chat_input("Ask a question about your documents...")
