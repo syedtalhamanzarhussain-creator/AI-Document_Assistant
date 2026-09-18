@@ -231,7 +231,7 @@ def generate_answer(
             {"role": "user", "content": prompt},
         ],
         temperature=0,
-        max_tokens=1200,
+        max_completion_tokens=1200,
     )
 
     answer = response.choices[0].message.content
